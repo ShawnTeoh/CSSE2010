@@ -52,6 +52,15 @@ uint8_t has_car_crashed(void);
 // Return true if the car has finished the lap, false otherwise
 uint8_t has_lap_finished(void);
 
+// Return the number of lives left
+uint8_t get_lives(void);
+
+// Alter number of lives
+void set_lives(uint8_t num);
+
+// Reset lives to MAX_LIVES
+void reset_lives(void);
+
 /////////////////////// UPDATE FUNCTIONS /////////////////////////////////////
 // Scroll the background by one row and update the display. Note that this
 // may cause the car to crash.

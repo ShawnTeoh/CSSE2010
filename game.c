@@ -27,6 +27,12 @@ static uint8_t car_crashed;
 // Boolean flag to indicate whether the lap has finished or not
 static uint8_t lap_finished;
 
+// Number of lives player has left
+static uint8_t lives;
+
+// Maximum number of player lives
+#define MAX_LIVES 3
+
 // Background - 8 bits in each row. A 1 indicates background being
 // present, a 0 is empty space. We will scroll through this and
 // return to the other end. Bit 0 (LSB) in these patterns will end
@@ -116,7 +122,10 @@ void put_car_at_start(void) {
 	// Car is initially alive and hasn't finished
 	car_crashed = 0;
 	lap_finished = 0;
-	
+
+	// Remove crashed car
+	redraw_game_row(1);
+	redraw_game_row(2);
 	// Show the car
 	redraw_car();
 }
@@ -176,6 +185,23 @@ void scroll_background(void) {
 	ledmatrix_shift_display_right();
 	redraw_car();
 	redraw_game_row(15);
+}
+
+uint8_t get_lives(void) {
+	return lives;
+}
+
+void reset_lives(void) {
+	lives = MAX_LIVES;
+}
+
+void set_lives(uint8_t num) {
+	if (lives > 0 && lives <= MAX_LIVES) {
+		lives += num;
+	}
+	if (lives > MAX_LIVES) {
+		lives = MAX_LIVES;
+	}
 }
 
 /////////////////////////////// Private (Helper) Functions /////////////////////

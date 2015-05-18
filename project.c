@@ -32,6 +32,7 @@ void new_game(void);
 void play_game(void);
 void handle_game_over(void);
 void handle_new_lap(void);
+void set_disp_lives(uint8_t num);
 
 // ASCII code for Escape character
 #define ESCAPE_CHAR 27
@@ -56,6 +57,9 @@ int main(void) {
 void initialise_hardware(void) {
 	ledmatrix_setup();
 	init_button_interrupts();
+
+	// Set pins 0, 1 and 2 on Port A to be outputs
+	DDRA |= (1<<0)|(1<<1)|(1<<2);
 	
 	// Setup serial port for 19200 baud communication with no echo
 	// of incoming characters
@@ -118,6 +122,9 @@ void new_game(void) {
 	// Initialise the score
 	init_score();
 	
+	// Reset number of lives and display
+	set_disp_lives(0);
+
 	// Clear a button push or serial input if any are waiting
 	// (The cast to void means the return value is ignored.)
 	(void)button_pushed();
@@ -226,7 +233,14 @@ void play_game(void) {
 			}
 		}
 	}
-	// If we get here the car has crashed. 
+	// If we get here the car has crashed.
+	// Check if any lives remaining.
+	if (get_lives() > 0) {
+		set_disp_lives(-1);
+		_delay_ms(1000); // Display crashed car
+		put_car_at_start();
+		play_game();
+	}
 }
 
 void handle_game_over() {
@@ -255,7 +269,34 @@ void handle_new_lap() {
 		; // wait until a button has been pushed
 	}
 	init_game();	// This will need to be changed for multiple lives
-	
+	set_disp_lives(1); // Reward for completing a lap
+
 	// Delay for half a second
 	_delay_ms(500);
+}
+
+// Helper function to convert number of lives to number of LEDs.
+void display_lives(void) {
+	uint8_t lives = get_lives();
+	PORTA = 0; // No LED
+	if (lives == 3) {
+		PORTA = (1<<0)|(1<<1)|(1<<2); // 3 LEDs
+		} else if (lives == 2) {
+		PORTA = (1<<1)|(1<<2); // 2 LEDs
+		} else if (lives == 1) {
+		PORTA = (1<<2); // 1 LED
+	}
+}
+
+/*
+ * Convenience function to alter player lives and redisplay.
+ * Parameter of 0 resets lives.
+ */
+void set_disp_lives(uint8_t num) {
+	if (num == 0) {
+		reset_lives();
+	} else {
+		set_lives(num);
+	}
+	display_lives();
 }
