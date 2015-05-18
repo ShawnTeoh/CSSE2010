@@ -125,6 +125,10 @@ void new_game(void) {
 	
 	// Delay for half a second
 	_delay_ms(500);
+
+	// Display score
+	move_cursor(10,14);
+	printf_P(PSTR("Score: %d"), get_score());
 }
 
 void play_game(void) {
@@ -132,6 +136,7 @@ void play_game(void) {
 	int8_t button;
 	char serial_input, escape_sequence_char;
 	uint8_t characters_into_escape_sequence = 0;
+	uint8_t moves = 0;
 	
 	// Get the current time and remember this as the last time the background scrolled.
 	current_time = get_clock_ticks();
@@ -187,9 +192,11 @@ void play_game(void) {
 		if(button==3 || escape_sequence_char=='D' || serial_input=='L' || serial_input=='l') {
 			// Attempt to move left
 			move_car_left();
+			moves++;
 		} else if(button==0 || escape_sequence_char=='C' || serial_input=='R' || serial_input=='r') {
 			// Attempt to move right
 			move_car_right();
+			moves++;
 		} else if(serial_input == 'p' || serial_input == 'P') {
 			// Unimplemented feature - pause/unpause the game until 'p' or 'P' is
 			// pressed again
@@ -204,6 +211,12 @@ void play_game(void) {
 			// we've finished the lap. (If a crash occurs we will drop out of 
 			// the main while loop so we don't need to check for that here.)
 			scroll_background();
+			if (moves < 5) {
+				add_to_score(5 - moves);
+				move_cursor(10,14);
+				printf_P(PSTR("Score: %d"), get_score());
+			}
+			moves = 0;
 			if(has_lap_finished()) {
 				handle_new_lap();	// Pauses until a button is pushed
 				// Reset the time of the last scroll
@@ -222,6 +235,8 @@ void handle_game_over() {
 	// will ensure the "LAP COMPLETE" message is completely overwritten.
 	printf_P(PSTR("GAME OVER   "));
 	move_cursor(10,15);
+	printf_P(PSTR("Score: %d"), get_score());
+	move_cursor(10,16);
 	printf_P(PSTR("Press a button to start again"));
 	while(button_pushed() == -1) {
 		; // wait until a button has been pushed
@@ -233,6 +248,8 @@ void handle_new_lap() {
 	move_cursor(10,14);
 	printf_P(PSTR("LAP COMPLETE"));
 	move_cursor(10,15);
+	printf_P(PSTR("Score: %d"), get_score());
+	move_cursor(10,16);
 	printf_P(PSTR("Press a button to continue"));
 	while(button_pushed() == -1) {
 		; // wait until a button has been pushed
