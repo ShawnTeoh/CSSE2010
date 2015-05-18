@@ -33,6 +33,10 @@ void play_game(void);
 void handle_game_over(void);
 void handle_new_lap(void);
 void set_disp_lives(uint8_t num);
+void reset_speed(uint16_t inc);
+
+// Speed of car
+uint16_t speed = 600;
 
 // ASCII code for Escape character
 #define ESCAPE_CHAR 27
@@ -125,6 +129,9 @@ void new_game(void) {
 	// Reset number of lives and display
 	set_disp_lives(0);
 
+	// Reset speed of car
+	reset_speed(0);
+
 	// Clear a button push or serial input if any are waiting
 	// (The cast to void means the return value is ignored.)
 	(void)button_pushed();
@@ -207,12 +214,24 @@ void play_game(void) {
 		} else if(serial_input == 'p' || serial_input == 'P') {
 			// Unimplemented feature - pause/unpause the game until 'p' or 'P' is
 			// pressed again
-		} 
+		} else if(button==2) {
+			if(speed > 100) {
+				speed -= 100;
+				move_cursor(10,15);
+				printf_P(PSTR("Speed: %d"), speed);
+			}
+		} else if(button==1) {
+			if(speed < 1000) {
+				speed += 100;
+				move_cursor(10,15);
+				printf_P(PSTR("Speed: %d"), speed);
+			}
+		}
 		// else - invalid input or we're part way through an escape sequence -
 		// do nothing
 		
 		current_time = get_clock_ticks();
-		if(!has_car_crashed() && current_time >= last_move_time + 600) {
+		if(!has_car_crashed() && current_time >= last_move_time + speed) {
 			// 600ms (0.6 second) has passed since the last time we scrolled
 			// the background, so scroll it now and check whether that means
 			// we've finished the lap. (If a crash occurs we will drop out of 
@@ -239,6 +258,7 @@ void play_game(void) {
 		set_disp_lives(-1);
 		_delay_ms(1000); // Display crashed car
 		put_car_at_start();
+		reset_speed(0);
 		play_game();
 	}
 }
@@ -270,6 +290,7 @@ void handle_new_lap() {
 	}
 	init_game();	// This will need to be changed for multiple lives
 	set_disp_lives(1); // Reward for completing a lap
+	reset_speed(0); // Reset speed of car
 
 	// Delay for half a second
 	_delay_ms(500);
@@ -299,4 +320,12 @@ void set_disp_lives(uint8_t num) {
 		set_lives(num);
 	}
 	display_lives();
+}
+
+/*
+ * Reset car to base speed.
+ * Supply parameter to alter base speed.
+ */
+void reset_speed(uint16_t inc) {
+	speed = 600 + inc;
 }

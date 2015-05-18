@@ -124,9 +124,11 @@ void put_car_at_start(void) {
 	// Initial starting position of car. It must be guaranteed that this
 	// initial position does not clash with the background.
 	srandom(get_clock_ticks());
+	// Keep on changing position until car does not clash
+	// with background (including 1 column before and after)
 	do {
 		car_column = rand() % 7;
-	} while(car_crashes_at(car_column));
+	} while(car_crashes_at(car_column) || car_crashes_at(car_column + 1) || car_crashes_at(car_column - 1));
 	
 	// Car is initially alive and hasn't finished
 	car_crashed = 0;
@@ -205,7 +207,7 @@ void reset_lives(void) {
 }
 
 void set_lives(uint8_t num) {
-	if (lives > 0 && lives <= MAX_LIVES) {
+	if (lives >= 0 && lives <= MAX_LIVES) {
 		lives += num;
 	}
 	if (lives > MAX_LIVES) {
