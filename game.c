@@ -13,7 +13,9 @@
 #include "game.h"
 #include "ledmatrix.h"
 #include "pixel_colour.h"
+#include "timer0.h"
 #include <stdint.h>
+#include <stdlib.h>
 
 ///////////////////////////////// Global variables //////////////////////
 // car_column stores the current position of the car. Game columns are numbered
@@ -80,6 +82,9 @@ static uint8_t background_data[NUM_GAME_ROWS] = {
 // until we reach the finish line (defined by RACE_DISTANCE)
 static uint8_t scroll_position;
 
+// Offset of scroll position
+static uint8_t initial_scroll;
+
 // Colours
 #define COLOUR_BACKGROUND	COLOUR_LIGHT_GREEN
 #define COLOUR_CAR			COLOUR_LIGHT_ORANGE
@@ -104,20 +109,24 @@ static void erase_car();
 // Reset the game
 void init_game(void) {
 	// Initial scroll position
-	scroll_position = 0;
-	
+	srandom(get_clock_ticks());
+	initial_scroll = random() % NUM_GAME_ROWS;
+	scroll_position = initial_scroll;
+
 	redraw_background();
 	
 	// Add a car to the display. (This will redraw the car.)
 	put_car_at_start();
 }
 
-// Add a car to the game. It is assumed that placing the car in column 3
-// will NOT overlap the background.
+// Add a car to the game, placed at an empty background.
 void put_car_at_start(void) {
 	// Initial starting position of car. It must be guaranteed that this
 	// initial position does not clash with the background.
-	car_column = 3;
+	srandom(get_clock_ticks());
+	do {
+		car_column = rand() % 7;
+	} while(car_crashes_at(car_column));
 	
 	// Car is initially alive and hasn't finished
 	car_crashed = 0;
@@ -169,7 +178,7 @@ void scroll_background(void) {
 	
 	// Check if the lap has finished. We add 2 to the scroll position
 	// because we're looking at the front of the car. 
-	if(scroll_position + 2 == RACE_DISTANCE) {
+	if(scroll_position - initial_scroll + 2 == RACE_DISTANCE) {
 		lap_finished = 1;	
 	} else {
 		// If we haven't finished the lap, then 
@@ -245,7 +254,7 @@ static void redraw_game_row(uint8_t row) {
 								   // column.
 	uint8_t i;
 	uint8_t race_row = scroll_position + row;
-	if(race_row == 0 || race_row == RACE_DISTANCE) {
+	if(race_row - initial_scroll == 0 || race_row - initial_scroll == RACE_DISTANCE) {
 		draw_start_or_finish_line(row);
 	} else {
 		uint8_t background_row_data = background_data[race_row % NUM_GAME_ROWS];
