@@ -19,6 +19,7 @@
 #include "terminalio.h"
 #include "score.h"
 #include "timer0.h"
+#include "timer1.h"
 #include "game.h"
 
 #define F_CPU 8000000L
@@ -70,6 +71,7 @@ void initialise_hardware(void) {
 	init_serial_stdio(19200,0);
 	
 	init_timer0();
+	init_timer1();
 	
 	// Turn on global interrupts
 	sei();
@@ -139,6 +141,9 @@ void new_game(void) {
 	
 	// Delay for half a second
 	_delay_ms(500);
+
+	// Start lap timer
+	start_lap_timer(1);
 
 	// Display score
 	move_cursor(10,14);
@@ -264,6 +269,8 @@ void play_game(void) {
 }
 
 void handle_game_over() {
+	stop_lap_timer();
+	clear_terminal();
 	move_cursor(10,14);
 	// Print a message to the terminal. The spaces on the end of the message
 	// will ensure the "LAP COMPLETE" message is completely overwritten.
@@ -279,11 +286,17 @@ void handle_game_over() {
 }
 
 void handle_new_lap() {
+	stop_lap_timer();
+	clear_terminal();
+	add_to_score(100); // Reward for completing a lap
+
 	move_cursor(10,14);
 	printf_P(PSTR("LAP COMPLETE"));
 	move_cursor(10,15);
 	printf_P(PSTR("Score: %d"), get_score());
 	move_cursor(10,16);
+	printf_P(PSTR("Lap Time: %d.%d second(s)"), get_lap_timer()/10, get_lap_timer()%10);
+	move_cursor(10,17);
 	printf_P(PSTR("Press a button to continue"));
 	while(button_pushed() == -1) {
 		; // wait until a button has been pushed
@@ -294,6 +307,10 @@ void handle_new_lap() {
 
 	// Delay for half a second
 	_delay_ms(500);
+	clear_terminal();
+	move_cursor(10,14);
+	printf_P(PSTR("Score: %d"), get_score());
+	start_lap_timer(1);
 }
 
 // Helper function to convert number of lives to number of LEDs.
@@ -309,8 +326,7 @@ void display_lives(void) {
 	}
 }
 
-/*
- * Convenience function to alter player lives and redisplay.
+/* Convenience function to alter player lives and redisplay.
  * Parameter of 0 resets lives.
  */
 void set_disp_lives(uint8_t num) {
@@ -322,8 +338,7 @@ void set_disp_lives(uint8_t num) {
 	display_lives();
 }
 
-/*
- * Reset car to base speed.
+/* Reset car to base speed.
  * Supply parameter to alter base speed.
  */
 void reset_speed(uint16_t inc) {
