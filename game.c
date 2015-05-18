@@ -132,7 +132,13 @@ void move_car_left(void) {
 }
 
 void move_car_right(void) {
-	// Unimplemented
+	if(car_column != 7) {
+		// Car not at right hand side
+		erase_car();
+		car_column++;
+		car_crashed = car_crashes_at(car_column);
+		redraw_car();
+	} // else car is at right hand side (column 7) and can't move right
 }
 
 uint8_t get_car_column(void) {
