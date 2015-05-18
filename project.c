@@ -3,7 +3,7 @@
  *
  * Main file
  *
- * Author: Peter Sutton. Modified by <YOUR NAME HERE>
+ * Author: Peter Sutton. Modified by Thuan Song Teoh.
  */ 
 
 #include <avr/io.h>
@@ -78,7 +78,7 @@ void splash_screen(void) {
 	
 	move_cursor(3,5);
 	set_display_attribute(FG_GREEN);	// Make the text green
-	printf_P(PSTR("CSSE2010/7201 project by <your name here>"));	
+	printf_P(PSTR("CSSE2010/7201 project by Thuan Song Teoh"));
 	set_display_attribute(FG_WHITE);	// Return to default colour (White)
 	
 	// Output the scrolling message to the LED matrix
@@ -88,7 +88,7 @@ void splash_screen(void) {
 	// Orange message the first time through
 	set_text_colour(COLOUR_ORANGE);
 	while(1) {
-		set_scrolling_display_text("RALLYRACER");
+		set_scrolling_display_text("RALLYRACER 43068052");
 		// Scroll the message until it has scrolled off the 
 		// display or a button is pushed. We pause for 130ms between each scroll.
 		while(scroll_display()) {
