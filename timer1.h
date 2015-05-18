@@ -39,4 +39,8 @@ void start_lap_timer(uint8_t status);
  */
 void stop_lap_timer(void);
 
+/* Toggle timer counter on/off.
+ */
+void toggle_timer1(void);
+
 #endif /* TIMER2_H_ */

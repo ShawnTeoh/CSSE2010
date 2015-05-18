@@ -20,6 +20,7 @@
  * milliseconds */
 static volatile uint16_t clock_ticks;
 
+// Counter toggle (0 off, 1 on)
 static volatile uint8_t timer = 0;
 
 /* Set up timer 1 to generate an interrupt every 100ms. 
@@ -68,6 +69,10 @@ void start_lap_timer(uint8_t status) {
 
 void stop_lap_timer(void) {
 	timer = 0;
+}
+
+void toggle_timer1(void) {
+	timer ? stop_lap_timer() : start_lap_timer(0);
 }
 
 uint16_t get_lap_timer(void) {

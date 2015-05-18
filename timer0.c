@@ -17,6 +17,9 @@
  * millisecond. Will overflow every ~49 days. */
 static volatile uint32_t clock_ticks;
 
+// Counter toggle (0 off, 1 on)
+static volatile uint8_t timer = 1;
+
 /* Set up timer 0 to generate an interrupt every 1ms. 
  * We will divide the clock by 64 and count up to 124.
  * We will therefore get an interrupt every 64 x 125
@@ -56,6 +59,10 @@ void init_timer0(void) {
 	TIFR0 &= (1<<OCF0A);
 }
 
+void toggle_timer0(void) {
+	timer = !timer;
+}
+
 uint32_t get_clock_ticks(void) {
 	uint32_t return_value;
 
@@ -75,5 +82,7 @@ uint32_t get_clock_ticks(void) {
 
 ISR(TIMER0_COMPA_vect) {
 	/* Increment our clock tick count */
-	clock_ticks++;
+	if(timer) {
+		clock_ticks++;
+	}
 }

@@ -39,6 +39,9 @@ void reset_speed(uint16_t inc);
 // Speed of car
 uint16_t speed = 600;
 
+// Pause status (0 resume, 1 pause)
+uint8_t paused = 0;
+
 // ASCII code for Escape character
 #define ESCAPE_CHAR 27
 
@@ -210,23 +213,29 @@ void play_game(void) {
 		// Process the input. 
 		if(button==3 || escape_sequence_char=='D' || serial_input=='L' || serial_input=='l') {
 			// Attempt to move left
-			move_car_left();
-			moves++;
+			if (!paused) {
+				move_car_left();
+				moves++;
+			}
 		} else if(button==0 || escape_sequence_char=='C' || serial_input=='R' || serial_input=='r') {
 			// Attempt to move right
-			move_car_right();
-			moves++;
+			if (!paused) {
+				move_car_right();
+				moves++;
+			}
 		} else if(serial_input == 'p' || serial_input == 'P') {
-			// Unimplemented feature - pause/unpause the game until 'p' or 'P' is
-			// pressed again
+			// Pause game (display, controls and timers)
+			paused = !paused;
+			toggle_timer0();
+			toggle_timer1();
 		} else if(button==2) {
-			if(speed > 100) {
+			if(!paused && speed > 100) {
 				speed -= 100;
 				move_cursor(10,15);
 				printf_P(PSTR("Speed: %d"), speed);
 			}
 		} else if(button==1) {
-			if(speed < 1000) {
+			if(!paused && speed < 1000) {
 				speed += 100;
 				move_cursor(10,15);
 				printf_P(PSTR("Speed: %d"), speed);
