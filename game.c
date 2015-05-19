@@ -85,11 +85,15 @@ static uint8_t scroll_position;
 // Offset of scroll position
 static uint8_t initial_scroll;
 
+// Power-up status (1 on, 0 off)
+static uint8_t powerup = 0;
+
 // Colours
 #define COLOUR_BACKGROUND	COLOUR_LIGHT_GREEN
 #define COLOUR_CAR			COLOUR_LIGHT_ORANGE
 #define COLOUR_CRASH		COLOUR_RED	
 #define COLOUR_FINISH_LINE	COLOUR_YELLOW		/* Also the start line */
+#define COLOUR_POWERUP		COLOUR_LIGHT_YELLOW
 
 
 /////////////////////////////// Function Prototypes for Helper Functions ///////
@@ -112,6 +116,7 @@ void init_game(void) {
 	srandom(get_clock_ticks());
 	initial_scroll = random() % NUM_GAME_ROWS;
 	scroll_position = initial_scroll;
+	powerup = 0; // Always turn off powerup at start of game
 
 	redraw_background();
 	
@@ -166,7 +171,11 @@ uint8_t get_car_column(void) {
 }
 
 uint8_t has_car_crashed(void) {
-	return car_crashed;
+	return !powerup & car_crashed;
+}
+
+void toggle_powerup(void) {
+	powerup = !powerup;
 }
 
 uint8_t has_lap_finished(void) {
@@ -285,7 +294,7 @@ static void draw_start_or_finish_line(uint8_t row) {
 // Redraw the car in its current position.
 static void redraw_car(void) {
 	uint8_t car_colour = COLOUR_CAR;
-	if(car_crashed) {
+	if(has_car_crashed()) {
 		car_colour = COLOUR_CRASH;
 	}
 	ledmatrix_update_pixel(15 - CAR_START_ROW, car_column, car_colour);

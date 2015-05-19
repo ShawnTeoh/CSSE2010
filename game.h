@@ -61,6 +61,9 @@ void set_lives(uint8_t num);
 // Reset lives to MAX_LIVES
 void reset_lives(void);
 
+// Toggle power-up status
+void toggle_powerup(void);
+
 /////////////////////// UPDATE FUNCTIONS /////////////////////////////////////
 // Scroll the background by one row and update the display. Note that this
 // may cause the car to crash.
