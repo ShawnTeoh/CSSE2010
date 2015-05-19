@@ -191,7 +191,7 @@ void new_game(void) {
 
 	// Display score
 	move_cursor(10,14);
-	printf_P(PSTR("Score: %d"), get_score());
+	printf_P(PSTR("Score: %ld"), get_score());
 }
 
 void play_game(void) {
@@ -295,7 +295,7 @@ void play_game(void) {
 			if (moves < 5) {
 				add_to_score(5 - moves);
 				move_cursor(10,14);
-				printf_P(PSTR("Score: %d"), get_score());
+				printf_P(PSTR("Score: %ld"), get_score());
 			}
 			moves = 0;
 			if(has_lap_finished()) {
@@ -326,7 +326,7 @@ void handle_game_over() {
 	// will ensure the "LAP COMPLETE" message is completely overwritten.
 	printf_P(PSTR("GAME OVER   "));
 	move_cursor(10,15);
-	printf_P(PSTR("Score: %d"), get_score());
+	printf_P(PSTR("Score: %ld"), get_score());
 	move_cursor(10,16);
 	printf_P(PSTR("Press a button to start again"));
 	while(button_pushed() == -1) {
@@ -345,7 +345,7 @@ void handle_new_lap() {
 	move_cursor(10,14);
 	printf_P(PSTR("LAP COMPLETE"));
 	move_cursor(10,15);
-	printf_P(PSTR("Score: %d"), get_score());
+	printf_P(PSTR("Score: %ld"), get_score());
 	move_cursor(10,16);
 	printf_P(PSTR("Lap Time: %d.%d second(s)"), get_lap_timer()/10, get_lap_timer()%10);
 	move_cursor(10,17);
@@ -368,7 +368,7 @@ void handle_new_lap() {
 	move_cursor(10,13);
 	printf_P(PSTR("Level %d"), level);
 	move_cursor(10,14);
-	printf_P(PSTR("Score: %d"), get_score());
+	printf_P(PSTR("Score: %ld"), get_score());
 	start_lap_timer(1);
 }
 
