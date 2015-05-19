@@ -99,7 +99,7 @@ static uint8_t powerup = 0;
 /////////////////////////////// Function Prototypes for Helper Functions ///////
 // These functions are defined after the public functions. Comments are with the
 // definitions.
-static uint8_t car_crashes_at(uint8_t column);
+static uint8_t car_crashes_at(uint8_t column, uint8_t extend);
 static void redraw_background(void);
 static void redraw_game_row(uint8_t row);
 static void draw_start_or_finish_line(uint8_t row);
@@ -133,15 +133,12 @@ void put_car_at_start(void) {
 	// with background (including 1 column before and after)
 	do {
 		car_column = rand() % 7;
-	} while(car_crashes_at(car_column) || car_crashes_at(car_column + 1) || car_crashes_at(car_column - 1));
+	} while(car_crashes_at(car_column, 1));
 	
 	// Car is initially alive and hasn't finished
 	car_crashed = 0;
 	lap_finished = 0;
 
-	// Remove crashed car
-	redraw_game_row(1);
-	redraw_game_row(2);
 	// Show the car
 	redraw_car();
 }
@@ -151,7 +148,7 @@ void move_car_left(void) {
 		// Car not at left hand side
 		erase_car();
 		car_column--;
-		car_crashed = car_crashes_at(car_column);
+		car_crashed = car_crashes_at(car_column, 0);
 		redraw_car();
 	} // else car is at left hand side (column 0) and can't move left
 }
@@ -161,7 +158,7 @@ void move_car_right(void) {
 		// Car not at right hand side
 		erase_car();
 		car_column++;
-		car_crashed = car_crashes_at(car_column);
+		car_crashed = car_crashes_at(car_column, 0);
 		redraw_car();
 	} // else car is at right hand side (column 7) and can't move right
 }
@@ -171,7 +168,7 @@ uint8_t get_car_column(void) {
 }
 
 uint8_t has_car_crashed(void) {
-	return !powerup & car_crashed;
+	return !powerup && car_crashed;
 }
 
 void toggle_powerup(void) {
@@ -195,7 +192,7 @@ void scroll_background(void) {
 		// If we haven't finished the lap, then 
 		// check whether the car has crashed or not in its current column
 		// (The background may have scrolled into it.)
-		car_crashed = car_crashes_at(car_column);
+		car_crashed = car_crashes_at(car_column, 0);
 	}
 	
 	// For speed purposes, we don't redraw the whole display, we
@@ -227,8 +224,8 @@ void set_lives(uint8_t num) {
 /////////////////////////////// Private (Helper) Functions /////////////////////
 
 // Return 1 if the car crashes if moved into the given column. We compare the car
-// position with the background in rows 1 and 2
-static uint8_t car_crashes_at(uint8_t column) {
+// position with the background in rows 1 and 2, row 3 as well if extend == 1
+static uint8_t car_crashes_at(uint8_t column, uint8_t extend) {
 	// Check row 1 at this column
 	uint8_t background_row_number = (1 + scroll_position) % NUM_GAME_ROWS;
 	uint8_t background_row_data = background_data[background_row_number];
@@ -242,6 +239,16 @@ static uint8_t car_crashes_at(uint8_t column) {
 	if(background_row_data & (1<< column)) {
 		// Collision between car and background in row 2
 		return 1;
+	}
+
+	if (extend) {
+		// Check row 3
+		background_row_number = (3 + scroll_position) % NUM_GAME_ROWS;
+		background_row_data = background_data[background_row_number];
+		if(background_row_data & (1<< column)) {
+			// Collision between car and background in row 3
+			return 1;
+		}
 	}
 	// No collision 
 	return 0;
@@ -293,6 +300,10 @@ static void draw_start_or_finish_line(uint8_t row) {
 
 // Redraw the car in its current position.
 static void redraw_car(void) {
+	// Remove "broken" walls or crashed car
+	redraw_game_row(0);
+	redraw_game_row(1);
+	redraw_game_row(2);
 	uint8_t car_colour = COLOUR_CAR;
 	if(has_car_crashed()) {
 		car_colour = COLOUR_CRASH;

@@ -144,6 +144,9 @@ void level_splash_screen(void) {
 	// display or a button is pushed. We pause for 80ms between each scroll.
 	while(scroll_display()) {
 		_delay_ms(80);
+		if(button_pushed() != -1) {
+			return;
+		}
 	}
 	return;
 }
@@ -180,6 +183,10 @@ void new_game(void) {
 
 	// Start lap timer
 	start_lap_timer(1);
+
+	// Display level
+	move_cursor(10,13);
+	printf_P(PSTR("Level %d"), level);
 
 	// Display score
 	move_cursor(10,14);
@@ -265,13 +272,13 @@ void play_game(void) {
 			if(!paused && speed > 100) {
 				speed -= 100;
 				move_cursor(10,15);
-				printf_P(PSTR("Speed: %d"), speed);
+				printf_P(PSTR("Speed: %d  "), speed);
 			}
 		} else if(button==1) {
 			if(!paused && speed < level_speed[level]) {
 				speed += 100;
 				move_cursor(10,15);
-				printf_P(PSTR("Speed: %d"), speed);
+				printf_P(PSTR("Speed: %d  "), speed);
 			}
 		}
 		// else - invalid input or we're part way through an escape sequence -
@@ -332,6 +339,8 @@ void handle_new_lap() {
 	clear_terminal();
 	add_to_score(100); // Reward for completing a lap
 
+	move_cursor(10,13);
+	printf_P(PSTR("Level %d"), level);
 	move_cursor(10,14);
 	printf_P(PSTR("LAP COMPLETE"));
 	move_cursor(10,15);
@@ -340,21 +349,23 @@ void handle_new_lap() {
 	printf_P(PSTR("Lap Time: %d.%d second(s)"), get_lap_timer()/10, get_lap_timer()%10);
 	move_cursor(10,17);
 	printf_P(PSTR("Press a button to continue"));
+	// Increase level up till 9
+	if (level < 9) {
+		level++;
+	}
 	while(button_pushed() == -1) {
 		; // wait until a button has been pushed
 	}
 	level_splash_screen(); // Show level
 	init_game();	// This will need to be changed for multiple lives
 	set_disp_lives(1); // Reward for completing a lap
-	// Increase level up till 9
-	if (level < 9) {
-		level++;
-	}
 	reset_speed(); // Reset speed of car according to level speed
 
 	// Delay for half a second
 	_delay_ms(500);
 	clear_terminal();
+	move_cursor(10,13);
+	printf_P(PSTR("Level %d"), level);
 	move_cursor(10,14);
 	printf_P(PSTR("Score: %d"), get_score());
 	start_lap_timer(1);
