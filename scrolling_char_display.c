@@ -121,6 +121,11 @@ static char* display_string;
 
 static volatile char* next_char_to_display = 0;
 
+void clear_prev_msg(void) {
+	next_col_ptr = 0;
+	next_char_to_display = 0;
+}
+
 /* Set the colour to be used
  */
 void set_text_colour(PixelColour c) {

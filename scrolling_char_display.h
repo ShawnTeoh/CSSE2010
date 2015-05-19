@@ -16,14 +16,7 @@
  */
 void set_text_colour(PixelColour colour);
 
-/* Sets the text to be displayed. The message will only
- * be displayed after the current message (if any). (Only
- * one message can be queued for display (i.e. to be 
- * displayed after the current message) - from the last
- * call to this function.) Note that this string is not 
- * copied, so it is important that this string not change
- * after this function is called while the string is still
- * being displayed.
+/* Sets the text to be displayed.
  */
 void set_scrolling_display_text(char* string);
 
@@ -35,5 +28,9 @@ void set_scrolling_display_text(char* string);
  * Returns 1 while a message is still scrolling, 0 when done.
  */
 uint8_t scroll_display(void);
+
+/* Clear previous message in queue.
+ */
+void clear_prev_msg(void);
 	
 #endif /* SCROLLING_CHAR_DISPLAY_H_ */

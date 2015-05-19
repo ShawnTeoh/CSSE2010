@@ -136,6 +136,7 @@ void level_splash_screen(void) {
 
 	// Output the scrolling message to the LED matrix
 	ledmatrix_clear();
+	clear_prev_msg();
 
 	// Orange message
 	set_text_colour(COLOUR_ORANGE);
@@ -152,6 +153,9 @@ void level_splash_screen(void) {
 }
 
 void new_game(void) {
+	// Reset level
+	level = 0;
+
 	// Show level
 	level_splash_screen();
 
@@ -166,9 +170,6 @@ void new_game(void) {
 	
 	// Reset number of lives and display
 	set_disp_lives(0);
-
-	// Reset level
-	level = 0;
 
 	// Reset speed of car
 	reset_speed();
