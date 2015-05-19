@@ -9,6 +9,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>		// For random()
 
@@ -34,13 +35,18 @@ void play_game(void);
 void handle_game_over(void);
 void handle_new_lap(void);
 void set_disp_lives(uint8_t num);
-void reset_speed(uint16_t inc);
+void reset_speed();
 
 // Speed of car
-uint16_t speed = 600;
+uint16_t speed;
+
+uint16_t level_speed[10] = { 1000, 900, 800, 700, 600, 500, 400, 300, 200, 100 };
 
 // Pause status (0 resume, 1 pause)
 uint8_t paused = 0;
+
+// Game level
+uint8_t level;
 
 // ASCII code for Escape character
 #define ESCAPE_CHAR 27
@@ -121,7 +127,31 @@ void splash_screen(void) {
 	}
 }
 
+void level_splash_screen(void) {
+	// Build text
+	char txt[8] = "Level ";
+	char lvl[2];
+	sprintf(lvl, "%d", level);
+	strcat(txt, lvl);
+
+	// Output the scrolling message to the LED matrix
+	ledmatrix_clear();
+
+	// Orange message
+	set_text_colour(COLOUR_ORANGE);
+	set_scrolling_display_text(txt);
+	// Scroll the message until it has scrolled off the
+	// display or a button is pushed. We pause for 80ms between each scroll.
+	while(scroll_display()) {
+		_delay_ms(80);
+	}
+	return;
+}
+
 void new_game(void) {
+	// Show level
+	level_splash_screen();
+
 	// Initialise the game and display
 	init_game();
 	
@@ -134,8 +164,11 @@ void new_game(void) {
 	// Reset number of lives and display
 	set_disp_lives(0);
 
+	// Reset level
+	level = 0;
+
 	// Reset speed of car
-	reset_speed(0);
+	reset_speed();
 
 	// Clear a button push or serial input if any are waiting
 	// (The cast to void means the return value is ignored.)
@@ -235,7 +268,7 @@ void play_game(void) {
 				printf_P(PSTR("Speed: %d"), speed);
 			}
 		} else if(button==1) {
-			if(!paused && speed < 1000) {
+			if(!paused && speed < level_speed[level]) {
 				speed += 100;
 				move_cursor(10,15);
 				printf_P(PSTR("Speed: %d"), speed);
@@ -246,7 +279,7 @@ void play_game(void) {
 		
 		current_time = get_clock_ticks();
 		if(!has_car_crashed() && current_time >= last_move_time + speed) {
-			// 600ms (0.6 second) has passed since the last time we scrolled
+			// <speed>ms has passed since the last time we scrolled
 			// the background, so scroll it now and check whether that means
 			// we've finished the lap. (If a crash occurs we will drop out of 
 			// the main while loop so we don't need to check for that here.)
@@ -272,7 +305,7 @@ void play_game(void) {
 		set_disp_lives(-1);
 		_delay_ms(1000); // Display crashed car
 		put_car_at_start();
-		reset_speed(0);
+		reset_speed();
 		play_game();
 	}
 }
@@ -310,9 +343,14 @@ void handle_new_lap() {
 	while(button_pushed() == -1) {
 		; // wait until a button has been pushed
 	}
+	level_splash_screen(); // Show level
 	init_game();	// This will need to be changed for multiple lives
 	set_disp_lives(1); // Reward for completing a lap
-	reset_speed(0); // Reset speed of car
+	// Increase level up till 9
+	if (level < 9) {
+		level++;
+	}
+	reset_speed(); // Reset speed of car according to level speed
 
 	// Delay for half a second
 	_delay_ms(500);
@@ -347,9 +385,8 @@ void set_disp_lives(uint8_t num) {
 	display_lives();
 }
 
-/* Reset car to base speed.
- * Supply parameter to alter base speed.
+/* Reset car to base speed (based on current level).
  */
-void reset_speed(uint16_t inc) {
-	speed = 600 + inc;
+void reset_speed() {
+	speed = level_speed[level];
 }
