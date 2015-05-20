@@ -56,19 +56,25 @@ uint8_t has_lap_finished(void);
 uint8_t get_lives(void);
 
 // Alter number of lives
-void set_lives(uint8_t num);
+void set_lives(int8_t num);
 
 // Reset lives to MAX_LIVES
 void reset_lives(void);
 
-// Toggle power-up status
-void toggle_powerup(void);
+// Set power-up status
+void set_powerup(uint8_t status);
 
 // Get power-up status
 uint8_t powerup_status(void);
 
+// Get power-up display status (0 cannot be seen, 1 can be seen)
+uint8_t powerup_display(void);
+
+// Blink the power-up pixel
+void blink_powerup(uint8_t reset);
+
 // Toggle car colour
-void toggle_car_colour(void);
+void toggle_car_colour(uint8_t reset);
 
 /////////////////////// UPDATE FUNCTIONS /////////////////////////////////////
 // Scroll the background by one row and update the display. Note that this

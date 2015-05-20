@@ -23,6 +23,10 @@
 static int8_t car_column;
 #define CAR_START_ROW 1
 
+static uint8_t powerup_scroll_position;
+static int8_t powerup_column;
+static int8_t powerup_row = -1;
+
 // Boolean flag to indicate whether the car has crashed or not
 static uint8_t car_crashed;
 
@@ -88,6 +92,8 @@ static uint8_t initial_scroll;
 // Power-up status (1 on, 0 off)
 static uint8_t powerup = 0;
 
+static uint8_t disp_powerup = 0;
+
 // Colours
 #define COLOUR_BACKGROUND	COLOUR_LIGHT_GREEN
 #define COLOUR_CAR			COLOUR_LIGHT_ORANGE
@@ -95,7 +101,11 @@ static uint8_t powerup = 0;
 #define COLOUR_FINISH_LINE	COLOUR_YELLOW		/* Also the start line */
 #define COLOUR_POWERUP		COLOUR_LIGHT_YELLOW
 
+// Variable to contain current car colour
 static uint8_t car_colour = COLOUR_CAR;
+
+// Variable to contain current power-up pixel colour
+static uint8_t powerup_colour = COLOUR_POWERUP;
 
 
 /////////////////////////////// Function Prototypes for Helper Functions ///////
@@ -106,6 +116,7 @@ static void redraw_background(void);
 static void redraw_game_row(uint8_t row);
 static void draw_start_or_finish_line(uint8_t row);
 static void redraw_car();
+static void redraw_powerup();
 static void erase_car();
 
 		
@@ -118,6 +129,8 @@ void init_game(void) {
 	srandom(get_clock_ticks());
 	initial_scroll = random() % NUM_GAME_ROWS;
 	scroll_position = initial_scroll;
+	powerup_scroll_position = random() % (RACE_DISTANCE - 10) + 50 + scroll_position;
+	powerup_row += scroll_position;
 	powerup = 0; // Always turn off powerup at start of game
 
 	redraw_background();
@@ -173,16 +186,38 @@ uint8_t has_car_crashed(void) {
 	return !powerup && car_crashed;
 }
 
-void toggle_powerup(void) {
-	powerup = !powerup;
+void set_powerup(uint8_t status) {
+	powerup = status;
 }
 
 uint8_t powerup_status(void) {
 	return powerup;
 }
 
-void toggle_car_colour(void) {
-	car_colour = (car_colour == COLOUR_CAR ? COLOUR_POWERUP:COLOUR_CAR);
+uint8_t powerup_display(void) {
+	if (scroll_position >= powerup_scroll_position && powerup_row > -1) {
+		disp_powerup = 1;
+	} else {
+		disp_powerup = 0;
+	}
+	return !powerup && disp_powerup;
+}
+
+void blink_powerup(uint8_t reset) {
+	if(reset) {
+		powerup_colour = COLOUR_BLACK;
+	} else {
+		powerup_colour = (powerup_colour == COLOUR_POWERUP ? COLOUR_BLACK:COLOUR_POWERUP);
+	}
+	redraw_powerup();
+}
+
+void toggle_car_colour(uint8_t reset) {
+	if(reset) {
+		car_colour = COLOUR_CAR;
+	} else {
+		car_colour = (car_colour == COLOUR_CAR ? COLOUR_POWERUP:COLOUR_CAR);
+	}
 	redraw_car();
 }
 
@@ -194,6 +229,12 @@ uint8_t has_lap_finished(void) {
 
 void scroll_background(void) {
 	scroll_position++;
+	if(scroll_position == powerup_scroll_position) {
+		powerup_row = 15;
+	}
+	if(powerup_row > -1) {
+		powerup_row--;
+	}
 	
 	// Check if the lap has finished. We add 2 to the scroll position
 	// because we're looking at the front of the car. 
@@ -211,6 +252,9 @@ void scroll_background(void) {
 	// LED matrix) and redraw the car and draw the new row 15
 	erase_car();
 	ledmatrix_shift_display_right();
+	if(powerup_display()) {
+		redraw_powerup();
+	}
 	redraw_car();
 	redraw_game_row(15);
 }
@@ -223,7 +267,7 @@ void reset_lives(void) {
 	lives = MAX_LIVES;
 }
 
-void set_lives(uint8_t num) {
+void set_lives(int8_t num) {
 	if (lives >= 0 && lives <= MAX_LIVES) {
 		lives += num;
 	}
@@ -317,6 +361,15 @@ static void redraw_car(void) {
 	}
 	ledmatrix_update_pixel(15 - CAR_START_ROW, car_column, car_colour);
 	ledmatrix_update_pixel(15 - (CAR_START_ROW+1), car_column, car_colour);
+}
+
+static void redraw_powerup(void) {
+	// Reset previous pixel
+	if(powerup_row < 15) {
+		ledmatrix_update_pixel(powerup_row + 1, powerup_column, COLOUR_BLACK);
+	}
+	// Update current pixel
+	ledmatrix_update_pixel(powerup_row, powerup_column, powerup_colour);
 }
 
 // Erase the car (we assume it hasn't crashed - so we just replace

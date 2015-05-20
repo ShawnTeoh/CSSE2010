@@ -197,6 +197,7 @@ void new_game(void) {
 void play_game(void) {
 	uint32_t current_time, last_move_time;
 	uint32_t crashed_time = 0L;
+	uint32_t powerup_time = 0L;
 	int8_t button;
 	char serial_input, escape_sequence_char;
 	uint8_t characters_into_escape_sequence = 0;
@@ -287,8 +288,15 @@ void play_game(void) {
 		// do nothing
 		
 		current_time = get_clock_ticks();
-		if(!has_car_crashed() && current_time >= last_move_time) {
-			toggle_car_colour();
+		if(powerup_time && current_time >= powerup_time + 5000) {
+			set_powerup(0);
+			toggle_car_colour(1);
+			powerup_time = 0L;
+		} else if(powerup_status() && current_time >= powerup_time + 4000) {
+			toggle_car_colour(0);
+		}
+		if(powerup_display()) {
+			blink_powerup(0);
 		}
 		if(!has_car_crashed() && current_time >= last_move_time + speed) {
 			// <speed>ms has passed since the last time we scrolled
@@ -308,6 +316,12 @@ void play_game(void) {
 				last_move_time = get_clock_ticks();
 			} else {
 				last_move_time = current_time;
+			}
+		}
+
+		if(powerup_status()) {
+			if(!powerup_time){
+				powerup_time = current_time;
 			}
 		}
 		// If we get here the car has crashed.
