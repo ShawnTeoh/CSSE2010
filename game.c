@@ -237,44 +237,27 @@ void set_lives(uint8_t num) {
 // Return 1 if the car crashes if moved into the given column. We compare the car
 // position with the background in rows 1 and 2, rows 0, 3 and 4 as well if extend == 1
 static uint8_t car_crashes_at(uint8_t column, uint8_t extend) {
-	// Check row 1 at this column
-	uint8_t background_row_number = (1 + scroll_position) % NUM_GAME_ROWS;
-	uint8_t background_row_data = background_data[background_row_number];
-	if(background_row_data & (1<< column)) {
-		// Collision between car and background in row 1
-		return 1;
-	}
-	// Check row 2
-	background_row_number = (2 + scroll_position) % NUM_GAME_ROWS;
-	background_row_data = background_data[background_row_number];
-	if(background_row_data & (1<< column)) {
-		// Collision between car and background in row 2
-		return 1;
+	uint8_t start;
+	uint8_t end;
+	if(extend) {
+		start = 0;
+		end = 4;
+	} else {
+		start = 1;
+		end = 2;
 	}
 
-	if (extend) {
-		// Check row 0
-		background_row_number = scroll_position % NUM_GAME_ROWS;
-		background_row_data = background_data[background_row_number];
+	// Check rows at this column
+	uint8_t i;
+	for (i=start;i<=end;i++) {
+		uint8_t background_row_number = (i + scroll_position) % NUM_GAME_ROWS;
+		uint8_t background_row_data = background_data[background_row_number];
 		if(background_row_data & (1<< column)) {
-			// Collision between car and background in row 0
-			return 1;
-		}
-		// Check row 3
-		background_row_number = (3 + scroll_position) % NUM_GAME_ROWS;
-		background_row_data = background_data[background_row_number];
-		if(background_row_data & (1<< column)) {
-			// Collision between car and background in row 3
-			return 1;
-		}
-		// Check row 4
-		background_row_number = (4 + scroll_position) % NUM_GAME_ROWS;
-		background_row_data = background_data[background_row_number];
-		if(background_row_data & (1<< column)) {
-			// Collision between car and background in row 4
+			// Collision between car and background in row i
 			return 1;
 		}
 	}
+
 	// No collision 
 	return 0;
 }
