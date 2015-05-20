@@ -287,6 +287,9 @@ void play_game(void) {
 		// do nothing
 		
 		current_time = get_clock_ticks();
+		if(!has_car_crashed() && current_time >= last_move_time) {
+			toggle_car_colour();
+		}
 		if(!has_car_crashed() && current_time >= last_move_time + speed) {
 			// <speed>ms has passed since the last time we scrolled
 			// the background, so scroll it now and check whether that means
@@ -309,8 +312,8 @@ void play_game(void) {
 		}
 		// If we get here the car has crashed.
 		// Check if any lives remaining.
-		current_time = get_clock_ticks();
 		if(has_car_crashed()) {
+			current_time = get_clock_ticks();
 			if(!crashed_time) {
 				set_disp_lives(-1);
 				crashed_time = current_time;

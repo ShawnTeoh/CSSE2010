@@ -64,6 +64,12 @@ void reset_lives(void);
 // Toggle power-up status
 void toggle_powerup(void);
 
+// Get power-up status
+uint8_t powerup_status(void);
+
+// Toggle car colour
+void toggle_car_colour(void);
+
 /////////////////////// UPDATE FUNCTIONS /////////////////////////////////////
 // Scroll the background by one row and update the display. Note that this
 // may cause the car to crash.

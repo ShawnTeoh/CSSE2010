@@ -95,6 +95,8 @@ static uint8_t powerup = 0;
 #define COLOUR_FINISH_LINE	COLOUR_YELLOW		/* Also the start line */
 #define COLOUR_POWERUP		COLOUR_LIGHT_YELLOW
 
+static uint8_t car_colour = COLOUR_CAR;
+
 
 /////////////////////////////// Function Prototypes for Helper Functions ///////
 // These functions are defined after the public functions. Comments are with the
@@ -173,6 +175,15 @@ uint8_t has_car_crashed(void) {
 
 void toggle_powerup(void) {
 	powerup = !powerup;
+}
+
+uint8_t powerup_status(void) {
+	return powerup;
+}
+
+void toggle_car_colour(void) {
+	car_colour = (car_colour == COLOUR_CAR ? COLOUR_POWERUP:COLOUR_CAR);
+	redraw_car();
 }
 
 uint8_t has_lap_finished(void) {
@@ -318,7 +329,6 @@ static void redraw_car(void) {
 	redraw_game_row(0);
 	redraw_game_row(1);
 	redraw_game_row(2);
-	uint8_t car_colour = COLOUR_CAR;
 	if(has_car_crashed()) {
 		car_colour = COLOUR_CRASH;
 	}
