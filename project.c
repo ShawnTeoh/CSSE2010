@@ -205,8 +205,8 @@ void play_game(void) {
 	current_time = get_clock_ticks();
 	last_move_time = current_time;
 	
-	// We play the game while the car hasn't crashed
-	while(!has_car_crashed()) {
+	// We play the game while the player still has lives
+	while(get_lives() > 0) {
 		
 		// Check for input - which could be a button push or serial input.
 		// Serial input may be part of an escape sequence, e.g. ESC [ D
@@ -292,7 +292,7 @@ void play_game(void) {
 			// we've finished the lap. (If a crash occurs we will drop out of 
 			// the main while loop so we don't need to check for that here.)
 			scroll_background();
-			if (moves < 5) {
+			if(moves < 5) {
 				add_to_score(5 - moves);
 				move_cursor(10,14);
 				printf_P(PSTR("Score: %ld"), get_score());
@@ -306,15 +306,17 @@ void play_game(void) {
 				last_move_time = current_time;
 			}
 		}
-	}
-	// If we get here the car has crashed.
-	// Check if any lives remaining.
-	if (get_lives() > 0) {
-		set_disp_lives(-1);
-		_delay_ms(1000); // Display crashed car
-		put_car_at_start();
-		reset_speed();
-		play_game();
+		// If we get here the car has crashed.
+		// Check if any lives remaining.
+		if(has_car_crashed()) {
+			set_disp_lives(-1);
+			_delay_ms(1000); // Display crashed car
+			if(get_lives() > 0) {
+				// Only replace car when player is still alive
+				put_car_at_start();
+				reset_speed();
+			}
+		}
 	}
 }
 
