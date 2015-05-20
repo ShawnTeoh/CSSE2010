@@ -196,6 +196,7 @@ void new_game(void) {
 
 void play_game(void) {
 	uint32_t current_time, last_move_time;
+	uint32_t crashed_time = 0L;
 	int8_t button;
 	char serial_input, escape_sequence_char;
 	uint8_t characters_into_escape_sequence = 0;
@@ -308,13 +309,20 @@ void play_game(void) {
 		}
 		// If we get here the car has crashed.
 		// Check if any lives remaining.
+		current_time = get_clock_ticks();
 		if(has_car_crashed()) {
-			set_disp_lives(-1);
-			_delay_ms(1000); // Display crashed car
-			if(get_lives() > 0) {
-				// Only replace car when player is still alive
-				put_car_at_start();
-				reset_speed();
+			if(!crashed_time) {
+				set_disp_lives(-1);
+				crashed_time = current_time;
+			}
+			// Display crashed car
+			if(current_time >= crashed_time + 1500) {
+				if(get_lives() > 0) {
+					// Only replace car when player is still alive
+					put_car_at_start();
+					reset_speed();
+					crashed_time = 0L;
+				}
 			}
 		}
 	}
