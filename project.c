@@ -288,14 +288,16 @@ void play_game(void) {
 		// do nothing
 		
 		current_time = get_clock_ticks();
-		if(powerup_time && current_time >= powerup_time + 5000) {
+		if(!paused && powerup_time && current_time >= powerup_time + 5000) {
 			set_powerup(0); // Turn off power-up after 5s
 			toggle_car_colour(1); // Reset car colour
 			powerup_time = 0L;
-		} else if(powerup_time && current_time >= powerup_time + 4000) {
+		} else if(!paused && powerup_time && current_time >= powerup_time + 4000) {
 			toggle_car_colour(0); // Blink car colour after 4s
 		}
-		blink_powerup(); // Blink power-up pixel
+		if (!paused) {
+			blink_powerup(); // Blink power-up pixel if not paused
+		}
 
 		if(!has_car_crashed() && current_time >= last_move_time + speed) {
 			// <speed>ms has passed since the last time we scrolled
