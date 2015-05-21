@@ -72,8 +72,8 @@ void initialise_hardware(void) {
 	ledmatrix_setup();
 	init_button_interrupts();
 
-	// Set pins 0, 1 and 2 on Port A to be outputs
-	DDRA |= (1<<0)|(1<<1)|(1<<2);
+	// Set pins 0, 1 and 2 on Port C to be outputs
+	DDRC |= (1<<0)|(1<<1)|(1<<2);
 	
 	// Setup serial port for 19200 baud communication with no echo
 	// of incoming characters
@@ -410,13 +410,13 @@ void handle_new_lap() {
 // Helper function to convert number of lives to number of LEDs.
 void display_lives(void) {
 	uint8_t lives = get_lives();
-	PORTA = 0; // No LED
+	PORTC = 0; // No LED
 	if (lives == 3) {
-		PORTA = (1<<0)|(1<<1)|(1<<2); // 3 LEDs
+		PORTC = (1<<0)|(1<<1)|(1<<2); // 3 LEDs
 	} else if (lives == 2) {
-		PORTA = (1<<1)|(1<<2); // 2 LEDs
+		PORTC = (1<<1)|(1<<2); // 2 LEDs
 	} else if (lives == 1) {
-		PORTA = (1<<2); // 1 LED
+		PORTC = (1<<2); // 1 LED
 	}
 }
 
