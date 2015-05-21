@@ -195,9 +195,8 @@ void new_game(void) {
 }
 
 void play_game(void) {
-	uint32_t current_time, last_move_time;
-	uint32_t crashed_time = 0L;
-	uint32_t powerup_time = 0L;
+	uint32_t current_time, last_move_time, last_car_flash;
+	uint32_t crashed_time = 0L, powerup_time = 0L, last_powerup_flash = 0L;
 	int8_t button;
 	char serial_input, escape_sequence_char;
 	uint8_t characters_into_escape_sequence = 0;
@@ -293,10 +292,15 @@ void play_game(void) {
 			toggle_car_colour(1); // Reset car colour
 			powerup_time = 0L;
 		} else if(!paused && powerup_time && current_time >= powerup_time + 4000) {
-			toggle_car_colour(0); // Blink car colour after 4s
+			 // Blink car colour after 4s
+			if(current_time >= last_car_flash + 100) {
+				toggle_car_colour(0);
+				last_car_flash = current_time;
+			}
 		}
-		if (!paused) {
+		if (!paused && current_time >= last_powerup_flash + 300) {
 			blink_powerup(); // Blink power-up pixel if not paused
+			last_powerup_flash = current_time;
 		}
 
 		if(!has_car_crashed() && current_time >= last_move_time + speed) {
@@ -312,6 +316,7 @@ void play_game(void) {
 			}
 			moves = 0;
 			if(has_lap_finished()) {
+				toggle_car_colour(1);
 				handle_new_lap();	// Pauses until a button is pushed
 				// Reset the time of the last scroll
 				last_move_time = get_clock_ticks();
@@ -324,6 +329,7 @@ void play_game(void) {
 		if(powerup_status()) {
 			if(!powerup_time){
 				powerup_time = current_time;
+				last_car_flash = current_time;
 			}
 		}
 
