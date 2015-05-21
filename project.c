@@ -256,13 +256,13 @@ void play_game(void) {
 		// Process the input. 
 		if(button==3 || escape_sequence_char=='D' || serial_input=='L' || serial_input=='l') {
 			// Attempt to move left
-			if (!paused) {
+			if (!paused && !has_car_crashed()) {
 				move_car_left();
 				moves++;
 			}
 		} else if(button==0 || escape_sequence_char=='C' || serial_input=='R' || serial_input=='r') {
 			// Attempt to move right
-			if (!paused) {
+			if (!paused && !has_car_crashed()) {
 				move_car_right();
 				moves++;
 			}
@@ -289,15 +289,14 @@ void play_game(void) {
 		
 		current_time = get_clock_ticks();
 		if(powerup_time && current_time >= powerup_time + 5000) {
-			set_powerup(0);
-			toggle_car_colour(1);
+			set_powerup(0); // Turn off power-up after 5s
+			toggle_car_colour(1); // Reset car colour
 			powerup_time = 0L;
-		} else if(powerup_status() && current_time >= powerup_time + 4000) {
-			toggle_car_colour(0);
+		} else if(powerup_time && current_time >= powerup_time + 4000) {
+			toggle_car_colour(0); // Blink car colour after 4s
 		}
-		if(powerup_display()) {
-			blink_powerup(0);
-		}
+		blink_powerup(); // Blink power-up pixel
+
 		if(!has_car_crashed() && current_time >= last_move_time + speed) {
 			// <speed>ms has passed since the last time we scrolled
 			// the background, so scroll it now and check whether that means
@@ -319,13 +318,14 @@ void play_game(void) {
 			}
 		}
 
+		// If power-up enabled, set activation time if none set previously
 		if(powerup_status()) {
 			if(!powerup_time){
 				powerup_time = current_time;
 			}
 		}
+
 		// If we get here the car has crashed.
-		// Check if any lives remaining.
 		if(has_car_crashed()) {
 			current_time = get_clock_ticks();
 			if(!crashed_time) {
@@ -405,9 +405,9 @@ void display_lives(void) {
 	PORTA = 0; // No LED
 	if (lives == 3) {
 		PORTA = (1<<0)|(1<<1)|(1<<2); // 3 LEDs
-		} else if (lives == 2) {
+	} else if (lives == 2) {
 		PORTA = (1<<1)|(1<<2); // 2 LEDs
-		} else if (lives == 1) {
+	} else if (lives == 1) {
 		PORTA = (1<<2); // 1 LED
 	}
 }

@@ -59,10 +59,6 @@ void init_timer0(void) {
 	TIFR0 &= (1<<OCF0A);
 }
 
-void toggle_timer0(void) {
-	timer = !timer;
-}
-
 uint32_t get_clock_ticks(void) {
 	uint32_t return_value;
 
@@ -78,6 +74,10 @@ uint32_t get_clock_ticks(void) {
 		sei();
 	}
 	return return_value;
+}
+
+void toggle_timer0(void) {
+	timer = !timer;
 }
 
 ISR(TIMER0_COMPA_vect) {

@@ -60,21 +60,6 @@ void init_timer1(void) {
 	TIFR1 &= (1<<OCF1A);
 }
 
-void start_lap_timer(uint8_t status) {
-	if (status) {
-		clock_ticks = 0;
-	}
-	timer = 1;
-}
-
-void stop_lap_timer(void) {
-	timer = 0;
-}
-
-void toggle_timer1(void) {
-	timer ? stop_lap_timer() : start_lap_timer(0);
-}
-
 uint16_t get_lap_timer(void) {
 	uint16_t return_value;
 
@@ -90,6 +75,21 @@ uint16_t get_lap_timer(void) {
 		sei();
 	}
 	return return_value;
+}
+
+void start_lap_timer(uint8_t status) {
+	if (status) {
+		clock_ticks = 0;
+	}
+	timer = 1;
+}
+
+void stop_lap_timer(void) {
+	timer = 0;
+}
+
+void toggle_timer1(void) {
+	timer ? stop_lap_timer() : start_lap_timer(0);
 }
 
 ISR(TIMER1_COMPA_vect) {
