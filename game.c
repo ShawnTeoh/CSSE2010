@@ -101,7 +101,7 @@ static uint8_t disp_powerup = 0;
 #define COLOUR_CAR			COLOUR_LIGHT_ORANGE
 #define COLOUR_CRASH		COLOUR_RED	
 #define COLOUR_FINISH_LINE	COLOUR_YELLOW		/* Also the start line */
-#define COLOUR_POWERUP		COLOUR_LIGHT_YELLOW
+#define COLOUR_POWERUP		COLOUR_GREEN
 
 // Variable to contain current car colour
 static uint8_t car_colour = COLOUR_CAR;
@@ -408,11 +408,12 @@ static uint8_t powerup_crashes_at(uint8_t column) {
 // Helper function to determine the position to place power-up
 static void place_powerup(void) {
 	// We want to place the power-up after the middle of a lap and not too close to finishing line
-	powerup_scroll_position = random() % (RACE_DISTANCE - 20) + 50 + scroll_position;
+	powerup_scroll_position = random() % (RACE_DISTANCE - 30 - RACE_DISTANCE / 2 + 1) +\
+								RACE_DISTANCE / 2 + scroll_position;
 	powerup_row = 16;
 	// Keep on changing column until power-up does not clash with background
 	do {
-		powerup_column = rand() % 7;
+		powerup_column = random() % 7;
 	} while(powerup_crashes_at(powerup_column));
 }
 

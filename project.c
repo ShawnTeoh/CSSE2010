@@ -22,6 +22,7 @@
 #include "timer0.h"
 #include "timer1.h"
 #include "game.h"
+#include "joystick.h"
 
 #define F_CPU 8000000L
 #include <util/delay.h>
@@ -35,7 +36,7 @@ void play_game(void);
 void handle_game_over(void);
 void handle_new_lap(void);
 void set_disp_lives(uint8_t num);
-void reset_speed();
+void reset_speed(void);
 
 // Speed of car
 uint16_t speed;
@@ -71,6 +72,7 @@ int main(void) {
 void initialise_hardware(void) {
 	ledmatrix_setup();
 	init_button_interrupts();
+	init_joystick();
 
 	// Set pins 0, 1 and 2 on Port C to be outputs
 	DDRC |= (1<<0)|(1<<1)|(1<<2);
@@ -197,7 +199,7 @@ void new_game(void) {
 void play_game(void) {
 	uint32_t current_time, last_move_time, last_car_flash;
 	uint32_t crashed_time = 0L, powerup_time = 0L, last_powerup_flash = 0L;
-	int8_t button;
+	int8_t button, joystick;
 	char serial_input, escape_sequence_char;
 	uint8_t characters_into_escape_sequence = 0;
 	uint8_t moves = 0;
@@ -251,15 +253,17 @@ void play_game(void) {
 				}
 			}
 		}
-		
+
+		joystick = joystick_direction(); // Update joystick direction
+
 		// Process the input. 
-		if(button==3 || escape_sequence_char=='D' || serial_input=='L' || serial_input=='l') {
+		if(button==3 || escape_sequence_char=='D' || serial_input=='L' || serial_input=='l' || joystick==3) {
 			// Attempt to move left
 			if (!paused && !has_car_crashed()) {
 				move_car_left();
 				moves++;
 			}
-		} else if(button==0 || escape_sequence_char=='C' || serial_input=='R' || serial_input=='r') {
+		} else if(button==0 || escape_sequence_char=='C' || serial_input=='R' || serial_input=='r' || joystick==4) {
 			// Attempt to move right
 			if (!paused && !has_car_crashed()) {
 				move_car_right();
@@ -270,13 +274,13 @@ void play_game(void) {
 			paused = !paused;
 			toggle_timer0();
 			toggle_timer1();
-		} else if(button==2) {
+		} else if(button==2 || joystick==1) {
 			if(!paused && speed > 100) {
 				speed -= 100;
 				move_cursor(10,15);
 				printf_P(PSTR("Speed: %d  "), speed);
 			}
-		} else if(button==1) {
+		} else if(button==1 || joystick==2) {
 			if(!paused && speed < level_speed[level]) {
 				speed += 100;
 				move_cursor(10,15);
@@ -298,7 +302,7 @@ void play_game(void) {
 				last_car_flash = current_time;
 			}
 		}
-		if (!paused && current_time >= last_powerup_flash + 300) {
+		if (!paused && current_time >= last_powerup_flash + 250) {
 			blink_powerup(); // Blink power-up pixel if not paused
 			last_powerup_flash = current_time;
 		}
@@ -317,6 +321,7 @@ void play_game(void) {
 			moves = 0;
 			if(has_lap_finished()) {
 				toggle_car_colour(1);
+				powerup_time = 0L;
 				handle_new_lap();	// Pauses until a button is pushed
 				// Reset the time of the last scroll
 				last_move_time = get_clock_ticks();
@@ -434,6 +439,6 @@ void set_disp_lives(uint8_t num) {
 
 /* Reset car to base speed (based on current level).
  */
-void reset_speed() {
+void reset_speed(void) {
 	speed = level_speed[level];
 }
