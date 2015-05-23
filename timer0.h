@@ -30,8 +30,4 @@ void init_timer0(void);
  */
 uint32_t get_timer0_clock_ticks(void);
 
-/* Toggle timer counter on/off.
- */
-void toggle_timer0(void);
-
 #endif

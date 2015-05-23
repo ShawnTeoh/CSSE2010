@@ -15,6 +15,7 @@
 
 #include "timer1.h"
 #include "terminalio.h"
+#include "project.h"
 
 /* Our internal clock tick counters - incremented every 100
  * milliseconds. clock_ticks will overflow every ~49 days.*/
@@ -23,9 +24,6 @@ static volatile uint32_t clock_ticks;
 
 // Counter toggle for lap timer (0 off, 1 on)
 static volatile uint8_t lap_timer = 0;
-
-// Counter toggle (0 off, 1 on)
-static volatile uint8_t timer = 1;
 
 /* Set up timer 1 to generate an interrupt every 100ms. 
  * We will divide the clock by 64 and count up to 12499.
@@ -99,10 +97,8 @@ uint32_t get_timer1_clock_ticks(void) {
 	return return_value;
 }
 
-void start_lap_timer(uint8_t status) {
-	if (status) {
-		lap_clock_ticks = 0;
-	}
+void start_lap_timer(void) {
+	lap_clock_ticks = 0;
 	lap_timer = 1;
 }
 
@@ -110,19 +106,14 @@ void stop_lap_timer(void) {
 	lap_timer = 0;
 }
 
-void toggle_timer1(void) {
-	lap_timer ? stop_lap_timer() : start_lap_timer(0);
-	timer = !timer;
-}
-
 ISR(TIMER1_COMPA_vect) {
 	/* Increment our clock tick counters if timer started */
-	if(lap_timer) {
+	if(!is_paused() && lap_timer) {
 		lap_clock_ticks++;
 		move_cursor(10,16);
 		printf_P(PSTR("Lap Time: %d.%d second(s)"), lap_clock_ticks/10, lap_clock_ticks%10);
 	}
-	if(timer) {
+	if(!is_paused()) {
 		clock_ticks++;
 	}
 }

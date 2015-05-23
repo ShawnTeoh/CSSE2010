@@ -35,17 +35,12 @@ uint16_t get_lap_timer(void);
  */
 uint32_t get_timer1_clock_ticks(void);
 
-/* Reset/start lap timer.
- * Supply 1 to reset timer, 0 to restart stopped timer.
+/* Reset and start lap timer.
  */
-void start_lap_timer(uint8_t status);
+void start_lap_timer(void);
 
 /* Stop lap timer.
  */
 void stop_lap_timer(void);
-
-/* Toggle timer counters on/off.
- */
-void toggle_timer1(void);
 
 #endif /* TIMER2_H_ */

@@ -188,7 +188,7 @@ void new_game(void) {
 	_delay_ms(500);
 
 	// Start lap timer
-	start_lap_timer(1);
+	start_lap_timer();
 
 	// Display level
 	move_cursor(10,13);
@@ -257,106 +257,110 @@ void play_game(void) {
 			}
 		}
 
-		joystick = joystick_direction(); // Update joystick direction
-
-		// Process the input. 
-		if(button==3 || escape_sequence_char=='D' || serial_input=='L' || serial_input=='l' || joystick==3) {
-			// Attempt to move left
-			if (!paused && !has_car_crashed()) {
-				move_car_left();
-				moves++;
-			}
-		} else if(button==0 || escape_sequence_char=='C' || serial_input=='R' || serial_input=='r' || joystick==4) {
-			// Attempt to move right
-			if (!paused && !has_car_crashed()) {
-				move_car_right();
-				moves++;
-			}
-		} else if(serial_input == 'p' || serial_input == 'P') {
+		if(serial_input == 'p' || serial_input == 'P') {
 			// Pause game (display, controls and timers)
 			if(!paused) {
+				// Clear buzzer bit to mute
 				PORTD &= ~(1<<3);
 			}
 			paused = !paused;
-			toggle_timer0();
-			toggle_timer1();
-		} else if(button==2 || joystick==1) {
-			if(!paused && speed > 100) {
-				speed -= 100;
-				move_cursor(10,15);
-				printf_P(PSTR("Speed: %d  "), speed);
-			}
-		} else if(button==1 || joystick==2) {
-			if(!paused && speed < level_speed[level]) {
-				speed += 100;
-				move_cursor(10,15);
-				printf_P(PSTR("Speed: %d  "), speed);
-			}
-		}
-		// else - invalid input or we're part way through an escape sequence -
-		// do nothing
-		
-		current_time = get_timer0_clock_ticks();
-		if(!paused && powerup_time && current_time >= powerup_time + 5000) {
-			set_powerup(0); // Turn off power-up after 5s
-			toggle_car_colour(1); // Reset car colour
-			powerup_time = 0L;
-		} else if(!paused && powerup_time && current_time >= powerup_time + 4000) {
-			 // Blink car colour after 4s
-			if(current_time >= last_car_flash + 100) {
-				toggle_car_colour(0);
-				last_car_flash = current_time;
-			}
-		}
-		if (!paused && current_time >= last_powerup_flash + 250) {
-			blink_powerup(); // Blink power-up pixel if not paused
-			last_powerup_flash = current_time;
 		}
 
-		if(!has_car_crashed() && current_time >= last_move_time + speed) {
-			// <speed>ms has passed since the last time we scrolled
-			// the background, so scroll it now and check whether that means
-			// we've finished the lap. (If a crash occurs we will drop out of 
-			// the main while loop so we don't need to check for that here.)
-			scroll_background();
-			if(moves < 5) {
-				add_to_score(5 - moves);
-				move_cursor(10,14);
-				printf_P(PSTR("Score: %ld"), get_score());
-			}
-			moves = 0;
-			if(has_lap_finished()) {
-				toggle_car_colour(1);
-				powerup_time = 0L;
-				handle_new_lap();	// Pauses until a button is pushed
-				// Reset the time of the last scroll
-				last_move_time = get_timer0_clock_ticks();
-			} else {
-				last_move_time = current_time;
-			}
-		}
+		if(!paused) {
+			joystick = joystick_direction(); // Update joystick direction
 
-		// If power-up enabled, set activation time if none set previously
-		if(powerup_status()) {
-			if(!powerup_time){
-				powerup_time = current_time;
-				last_car_flash = current_time;
-				set_sound_type(3);
+			// Process the input.
+			if(button==3 || escape_sequence_char=='D' || serial_input=='L' || serial_input=='l' || joystick==3) {
+				// Attempt to move left
+				if (!has_car_crashed()) {
+					move_car_left();
+					moves++;
+				}
+			} else if(button==0 || escape_sequence_char=='C' || serial_input=='R' || serial_input=='r' || joystick==4) {
+				// Attempt to move right
+				if (!has_car_crashed()) {
+					move_car_right();
+					moves++;
+				}
+			} else if(button==2 || joystick==1) {
+				if(speed > 100) {
+					speed -= 100;
+					move_cursor(10,15);
+					printf_P(PSTR("Speed: %d  "), speed);
+				}
+			} else if(button==1 || joystick==2) {
+				if(speed < level_speed[level]) {
+					speed += 100;
+					move_cursor(10,15);
+					printf_P(PSTR("Speed: %d  "), speed);
+				}
 			}
-		}
+			// else - invalid input or we're part way through an escape sequence -
+			// do nothing
 
-		// If we get here the car has crashed.
-		if(has_car_crashed()) {
 			current_time = get_timer0_clock_ticks();
-			if(!crashed_time) {
-				set_disp_lives(-1);
-				crashed_time = current_time;
+			if(powerup_time && current_time >= powerup_time + 5000) {
+				set_powerup(0); // Turn off power-up after 5s
+				toggle_car_colour(1); // Reset car colour
+				powerup_time = 0L;
+			} else if(powerup_time && current_time >= powerup_time + 4000) {
+				 // Blink car colour after 4s
+				if(current_time >= last_car_flash + 100) {
+					toggle_car_colour(0);
+					last_car_flash = current_time;
+				}
 			}
-			// Display crashed car
-			if(current_time >= crashed_time + 1500) {
-				put_car_at_start();
-				reset_speed();
-				crashed_time = 0L;
+			if(current_time >= last_powerup_flash + 250) {
+				blink_powerup(); // Blink power-up pixel if not paused
+				last_powerup_flash = current_time;
+			}
+
+			if(!has_car_crashed() && current_time >= last_move_time + speed) {
+				// <speed>ms has passed since the last time we scrolled
+				// the background, so scroll it now and check whether that means
+				// we've finished the lap. (If a crash occurs and no lives left,
+				// we will drop out of the main while loop so we don't need to
+				// check for that here.)
+				scroll_background();
+				if(moves < 5) {
+					add_to_score(5 - moves);
+					move_cursor(10,14);
+					printf_P(PSTR("Score: %ld"), get_score());
+				}
+				moves = 0;
+				if(has_lap_finished()) {
+					toggle_car_colour(1);
+					powerup_time = 0L;
+					handle_new_lap();	// Pauses until a button is pushed
+					// Reset the time of the last scroll
+					last_move_time = get_timer0_clock_ticks();
+				} else {
+					last_move_time = current_time;
+				}
+			}
+
+			// If power-up enabled, set activation time if none set previously
+			if(powerup_status()) {
+				if(!powerup_time){
+					powerup_time = current_time;
+					last_car_flash = current_time;
+					set_sound_type(3);
+				}
+			}
+
+			// If we get here the car has crashed.
+			if(has_car_crashed()) {
+				current_time = get_timer0_clock_ticks();
+				if(!crashed_time) {
+					set_disp_lives(-1);
+					crashed_time = current_time;
+				}
+				// Display crashed car
+				if(current_time >= crashed_time + 1500) {
+					put_car_at_start();
+					reset_speed();
+					crashed_time = 0L;
+				}
 			}
 		}
 	}
@@ -421,7 +425,7 @@ void handle_new_lap() {
 	printf_P(PSTR("Level %d"), level);
 	move_cursor(10,14);
 	printf_P(PSTR("Score: %ld"), get_score());
-	start_lap_timer(1);
+	start_lap_timer();
 }
 
 // Helper function to convert number of lives to number of LEDs.

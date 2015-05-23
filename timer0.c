@@ -12,13 +12,11 @@
 #include <avr/interrupt.h>
 
 #include "timer0.h"
+#include "project.h"
 
 /* Our internal clock tick count - incremented every 
  * millisecond. Will overflow every ~49 days. */
 static volatile uint32_t clock_ticks;
-
-// Counter toggle (0 off, 1 on)
-static volatile uint8_t timer = 1;
 
 /* Set up timer 0 to generate an interrupt every 1ms. 
  * We will divide the clock by 64 and count up to 124.
@@ -76,13 +74,9 @@ uint32_t get_timer0_clock_ticks(void) {
 	return return_value;
 }
 
-void toggle_timer0(void) {
-	timer = !timer;
-}
-
 ISR(TIMER0_COMPA_vect) {
 	/* Increment our clock tick count */
-	if(timer) {
+	if(!is_paused()) {
 		clock_ticks++;
 	}
 }
