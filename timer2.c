@@ -14,6 +14,7 @@
 
 #include "timer2.h"
 #include "timer1.h"
+#include "project.h"
 
 // Frequency of beep
 volatile static int16_t num;
@@ -114,7 +115,7 @@ ISR(TIMER2_COMPA_vect) {
 	if(cur_sound[0]) {
 		current_time = get_timer1_clock_ticks();
 		if(sounded < cur_sound[0]) {
-			if(current_time <= prev_time + cur_sound[1]){
+			if(!is_paused() && current_time <= prev_time + cur_sound[1]){
 				// Beep until specified length
 				if(!get_bit(PIND,2)) {
 					// Toggle bit

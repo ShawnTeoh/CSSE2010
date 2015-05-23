@@ -16,7 +16,7 @@
 #include "timer1.h"
 #include "terminalio.h"
 
-/* Our internal clock tick counters - incremented every 100 
+/* Our internal clock tick counters - incremented every 100
  * milliseconds. clock_ticks will overflow every ~49 days.*/
 static volatile uint16_t lap_clock_ticks;
 static volatile uint32_t clock_ticks;

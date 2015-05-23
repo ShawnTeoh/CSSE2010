@@ -2,7 +2,7 @@
  * joystick.c
  *
  * Author: Thuan Song Teoh
- * 
+ *
  * Code logic to determine joytick position and autofire.
  */
 

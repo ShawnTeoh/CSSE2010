@@ -24,6 +24,7 @@
 #include "timer2.h"
 #include "game.h"
 #include "joystick.h"
+#include "project.h"
 
 #define F_CPU 8000000L
 #include <util/delay.h>
@@ -273,6 +274,9 @@ void play_game(void) {
 			}
 		} else if(serial_input == 'p' || serial_input == 'P') {
 			// Pause game (display, controls and timers)
+			if(!paused) {
+				PORTD &= ~(1<<3);
+			}
 			paused = !paused;
 			toggle_timer0();
 			toggle_timer1();
@@ -449,4 +453,8 @@ void set_disp_lives(uint8_t num) {
  */
 void reset_speed(void) {
 	speed = level_speed[level];
+}
+
+uint8_t is_paused(void) {
+	return paused;
 }
