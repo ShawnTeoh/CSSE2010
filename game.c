@@ -407,9 +407,9 @@ static uint8_t powerup_crashes_at(uint8_t column) {
 
 // Helper function to determine the position to place power-up
 static void place_powerup(void) {
-	// We want to place the power-up after the middle of a lap and not too close to finishing line
-	powerup_scroll_position = random() % (RACE_DISTANCE - 30 - RACE_DISTANCE / 2 + 1) +\
-								RACE_DISTANCE / 2 + scroll_position;
+	// We want to place the power-up slightly after the start of a lap
+	// and not too close to finishing line
+	powerup_scroll_position = random() % (RACE_DISTANCE - 60 - 30 + 1) + 30 + scroll_position;
 	powerup_row = 16;
 	// Keep on changing column until power-up does not clash with background
 	do {
@@ -431,6 +431,6 @@ static uint8_t car_touches_powerup(uint8_t column) {
 static void powerup_check(void) {
 	if(powerup_display()) {
 		powerup = car_touches_powerup(car_column);
-		car_colour = powerup ? COLOUR_POWERUP:COLOUR_CAR;
+		car_colour = (powerup ? COLOUR_POWERUP:COLOUR_CAR);
 	}
 }
