@@ -16,12 +16,16 @@
 #include "timer1.h"
 #include "terminalio.h"
 
-/* Our internal clock tick count - incremented every 100 
- * milliseconds */
-static volatile uint16_t clock_ticks;
+/* Our internal clock tick counters - incremented every 100 
+ * milliseconds. clock_ticks will overflow every ~49 days.*/
+static volatile uint16_t lap_clock_ticks;
+static volatile uint32_t clock_ticks;
+
+// Counter toggle for lap timer (0 off, 1 on)
+static volatile uint8_t lap_timer = 0;
 
 // Counter toggle (0 off, 1 on)
-static volatile uint8_t timer = 0;
+static volatile uint8_t timer = 1;
 
 /* Set up timer 1 to generate an interrupt every 100ms. 
  * We will divide the clock by 64 and count up to 12499.
@@ -32,8 +36,9 @@ static volatile uint8_t timer = 0;
  * output compare value.
  */
 void init_timer1(void) {
-	/* Reset clock tick count */
-	clock_ticks = 0;
+	/* Reset clock ticks count */
+	lap_clock_ticks = 0;
+	clock_ticks = 0L;
 	
 	/* Clear the timer */
 	TCNT1 = 0;
@@ -70,6 +75,23 @@ uint16_t get_lap_timer(void) {
 	 */
 	uint8_t interrupts_on = bit_is_set(SREG, SREG_I);
 	cli();
+	return_value = lap_clock_ticks;
+	if(interrupts_on) {
+		sei();
+	}
+	return return_value;
+}
+
+uint32_t get_timer1_clock_ticks(void) {
+	uint32_t return_value;
+
+	/* Disable interrupts so we can be sure that the interrupt
+	 * doesn't fire when we've copied just a couple of bytes
+	 * of the value. Interrupts are re-enabled if they were
+	 * enabled at the start.
+	 */
+	uint8_t interrupts_on = bit_is_set(SREG, SREG_I);
+	cli();
 	return_value = clock_ticks;
 	if(interrupts_on) {
 		sei();
@@ -79,24 +101,28 @@ uint16_t get_lap_timer(void) {
 
 void start_lap_timer(uint8_t status) {
 	if (status) {
-		clock_ticks = 0;
+		lap_clock_ticks = 0;
 	}
-	timer = 1;
+	lap_timer = 1;
 }
 
 void stop_lap_timer(void) {
-	timer = 0;
+	lap_timer = 0;
 }
 
 void toggle_timer1(void) {
-	timer ? stop_lap_timer() : start_lap_timer(0);
+	lap_timer ? stop_lap_timer() : start_lap_timer(0);
+	timer = !timer;
 }
 
 ISR(TIMER1_COMPA_vect) {
-	/* Increment our clock tick count if timer started */
-	if (timer) {
-		clock_ticks++;
+	/* Increment our clock tick counters if timer started */
+	if(lap_timer) {
+		lap_clock_ticks++;
 		move_cursor(10,16);
-		printf_P(PSTR("Lap Time: %d.%d second(s)"), clock_ticks/10, clock_ticks%10);
-	}    
+		printf_P(PSTR("Lap Time: %d.%d second(s)"), lap_clock_ticks/10, lap_clock_ticks%10);
+	}
+	if(timer) {
+		clock_ticks++;
+	}
 }

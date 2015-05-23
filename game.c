@@ -14,6 +14,7 @@
 #include "ledmatrix.h"
 #include "pixel_colour.h"
 #include "timer0.h"
+#include "timer2.h"
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -133,9 +134,12 @@ static void powerup_check(void);
 // Reset the game
 void init_game(void) {
 	// Initial scroll position
-	srandom(get_clock_ticks());
+	srandom(get_timer0_clock_ticks());
 	initial_scroll = random() % NUM_GAME_ROWS;
 	scroll_position = initial_scroll;
+
+	// Reset sound
+	set_sound_type(0);
 
 	// Determine where power-up will appear
 	place_powerup();
@@ -151,7 +155,7 @@ void init_game(void) {
 void put_car_at_start(void) {
 	// Initial starting position of car. It must be guaranteed that this
 	// initial position does not clash with the background.
-	srandom(get_clock_ticks());
+	srandom(get_timer0_clock_ticks());
 	// Keep on changing column until car does not clash
 	// with background (including 1 row before and after)
 	do {

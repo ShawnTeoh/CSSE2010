@@ -5,7 +5,7 @@
  *
  * We setup timer0 to generate an interrupt every 1ms
  * We update a global clock tick variable - whose value
- * can be retrieved using the get_clock_ticks() function.
+ * can be retrieved using the get_timer0_clock_ticks() function.
  */
 
 #include <avr/io.h>
@@ -59,7 +59,7 @@ void init_timer0(void) {
 	TIFR0 &= (1<<OCF0A);
 }
 
-uint32_t get_clock_ticks(void) {
+uint32_t get_timer0_clock_ticks(void) {
 	uint32_t return_value;
 
 	/* Disable interrupts so we can be sure that the interrupt

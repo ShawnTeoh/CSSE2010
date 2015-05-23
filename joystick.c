@@ -1,7 +1,9 @@
 /*
  * joystick.c
  *
- *  Author: Thuan Song Teoh
+ * Author: Thuan Song Teoh
+ * 
+ * Code logic to determine joytick position and autofire.
  */
 
 #include <avr/io.h>
@@ -68,16 +70,16 @@ uint8_t joystick_direction(void) {
 	// Only process if joystick not in middle
 	if(direction > 0) {
 		// If same direction as previously, check if 500ms has elapsed
-		// or else assume at middle
+		// (autofire) or else assume at middle
 		if (prev_direction == direction) {
-			current_time = get_clock_ticks();
+			current_time = get_timer0_clock_ticks();
 			if(current_time < prev_time + 500) {
 				return -1;
 			}
 		}
 
 		prev_direction = direction;
-		prev_time = get_clock_ticks();
+		prev_time = get_timer0_clock_ticks();
 	}
 
 	return direction;

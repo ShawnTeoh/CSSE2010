@@ -21,6 +21,7 @@
 #include "score.h"
 #include "timer0.h"
 #include "timer1.h"
+#include "timer2.h"
 #include "game.h"
 #include "joystick.h"
 
@@ -41,7 +42,7 @@ void reset_speed(void);
 // Speed of car
 uint16_t speed;
 
-uint16_t level_speed[10] = { 1000, 900, 800, 700, 600, 500, 400, 300, 200, 100 };
+const uint16_t level_speed[10] = { 1000, 900, 800, 700, 600, 500, 400, 300, 200, 100 };
 
 // Pause status (0 resume, 1 pause)
 uint8_t paused = 0;
@@ -83,6 +84,7 @@ void initialise_hardware(void) {
 	
 	init_timer0();
 	init_timer1();
+	init_timer2();
 	
 	// Turn on global interrupts
 	sei();
@@ -205,7 +207,7 @@ void play_game(void) {
 	uint8_t moves = 0;
 	
 	// Get the current time and remember this as the last time the background scrolled.
-	current_time = get_clock_ticks();
+	current_time = get_timer0_clock_ticks();
 	last_move_time = current_time;
 	
 	// We play the game while the player still has lives
@@ -290,7 +292,7 @@ void play_game(void) {
 		// else - invalid input or we're part way through an escape sequence -
 		// do nothing
 		
-		current_time = get_clock_ticks();
+		current_time = get_timer0_clock_ticks();
 		if(!paused && powerup_time && current_time >= powerup_time + 5000) {
 			set_powerup(0); // Turn off power-up after 5s
 			toggle_car_colour(1); // Reset car colour
@@ -324,7 +326,7 @@ void play_game(void) {
 				powerup_time = 0L;
 				handle_new_lap();	// Pauses until a button is pushed
 				// Reset the time of the last scroll
-				last_move_time = get_clock_ticks();
+				last_move_time = get_timer0_clock_ticks();
 			} else {
 				last_move_time = current_time;
 			}
@@ -335,24 +337,22 @@ void play_game(void) {
 			if(!powerup_time){
 				powerup_time = current_time;
 				last_car_flash = current_time;
+				set_sound_type(3);
 			}
 		}
 
 		// If we get here the car has crashed.
 		if(has_car_crashed()) {
-			current_time = get_clock_ticks();
+			current_time = get_timer0_clock_ticks();
 			if(!crashed_time) {
 				set_disp_lives(-1);
 				crashed_time = current_time;
 			}
 			// Display crashed car
 			if(current_time >= crashed_time + 1500) {
-				if(get_lives() > 0) {
-					// Only replace car when player is still alive
-					put_car_at_start();
-					reset_speed();
-					crashed_time = 0L;
-				}
+				put_car_at_start();
+				reset_speed();
+				crashed_time = 0L;
 			}
 		}
 	}
@@ -360,6 +360,10 @@ void play_game(void) {
 
 void handle_game_over() {
 	stop_lap_timer();
+	set_sound_type(2);
+	while(is_sound_playing()) {
+		; // Wait until sound finishes playing
+	}
 	clear_terminal();
 	move_cursor(10,14);
 	// Print a message to the terminal. The spaces on the end of the message
@@ -377,6 +381,10 @@ void handle_game_over() {
 
 void handle_new_lap() {
 	stop_lap_timer();
+	set_sound_type(1);
+	while(is_sound_playing()) {
+		; // Wait until sound finishes playing
+	}
 	clear_terminal();
 	add_to_score(100); // Reward for completing a lap
 

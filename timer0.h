@@ -9,7 +9,7 @@
  * to the interrupt handler (in timer0.c) or can
  * be added to the main event loop that checks the
  * clock tick value. This value (32 bits) can be 
- * obtained using the get_clock_ticks() function.
+ * obtained using the get_timer0_clock_ticks() function.
  * (Any tasks undertaken in the interrupt handler
  * should be kept short so that we don't run the 
  * risk of missing an interrupt in future.)
@@ -28,7 +28,7 @@ void init_timer0(void);
 /* Return the current clock tick value - milliseconds since the timer was
  * initialised.
  */
-uint32_t get_clock_ticks(void);
+uint32_t get_timer0_clock_ticks(void);
 
 /* Toggle timer counter on/off.
  */

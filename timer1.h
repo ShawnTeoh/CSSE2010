@@ -8,12 +8,12 @@
  * regularly (every 100 milliseconds or few) can be added
  * to the interrupt handler (in timer1.c) or can
  * be added to the main event loop that checks the
- * clock tick value. This value (16 bits) can be
- * obtained using the get_lap_timer() function.
+ * clock tick value. These values (16 and 32 bits) can be
+ * obtained using the get_lap_timer() and get_timer1_clock_ticks() functions.
  * (Any tasks undertaken in the interrupt handler
  * should be kept short so that we don't run the
  * risk of missing an interrupt in future.)
- */ 
+ */
 
 #ifndef TIMER1_H_
 #define TIMER1_H_
@@ -25,10 +25,15 @@
  */
 void init_timer1(void);
 
-/* Return the current clock tick value - in increments of 100 milliseconds since the timer was
+/* Return the current value of lap timer - in increments of 100 milliseconds since the timer was
  * initialised.
  */
 uint16_t get_lap_timer(void);
+
+/* Return the current clock tick value - in increments of 100 milliseconds since the timer was
+ * initialised.
+ */
+uint32_t get_timer1_clock_ticks(void);
 
 /* Reset/start lap timer.
  * Supply 1 to reset timer, 0 to restart stopped timer.
@@ -39,7 +44,7 @@ void start_lap_timer(uint8_t status);
  */
 void stop_lap_timer(void);
 
-/* Toggle timer counter on/off.
+/* Toggle timer counters on/off.
  */
 void toggle_timer1(void);
 
