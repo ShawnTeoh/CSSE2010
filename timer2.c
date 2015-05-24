@@ -113,8 +113,8 @@ ISR(TIMER2_COMPA_vect) {
 			current_time = get_timer1_clock_ticks();
 			if(!is_paused() && current_time <= prev_time + cur_sound[1]){
 				// Beep until specified length
-				if(!get_bit(PIND,2)) {
-					// Toggle bit
+				if(get_bit(PIND,2)) {
+					// Not muted, toggle bit to create wave
 					PORTD ^= 1<<3;
 				} else {
 					// Muted, clear bit

@@ -389,6 +389,7 @@ void handle_game_over() {
 
 void handle_new_lap() {
 	stop_lap_timer();
+	set_sound_type(0); // Reset any previous sound to avoid race condition
 	set_sound_type(1);
 	while(is_sound_playing()) {
 		; // Wait until sound finishes playing
