@@ -16,9 +16,6 @@
 #include "timer1.h"
 #include "project.h"
 
-// Frequency of beep
-volatile static int16_t num;
-
 // Number of times buzzer beeped
 volatile static int8_t sounded;
 
@@ -63,8 +60,7 @@ uint8_t get_bit(uint8_t value, uint8_t index) {
 void set_sound_type(uint8_t type) {
 	cur_sound = sounds[type];
 	if(cur_sound[0]) {
-		num = cur_sound[3];
-		OCR2A = F_CPU / 64 / num - 1;
+		OCR2A = F_CPU / 64 / cur_sound[3] - 1;
 		sounded = 0;
 		playing = 1;
 		prev_time = get_timer1_clock_ticks();
@@ -113,8 +109,8 @@ uint8_t is_sound_playing(void) {
 
 ISR(TIMER2_COMPA_vect) {
 	if(cur_sound[0]) {
-		current_time = get_timer1_clock_ticks();
 		if(sounded < cur_sound[0]) {
+			current_time = get_timer1_clock_ticks();
 			if(!is_paused() && current_time <= prev_time + cur_sound[1]){
 				// Beep until specified length
 				if(!get_bit(PIND,2)) {

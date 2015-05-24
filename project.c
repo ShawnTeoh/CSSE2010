@@ -421,11 +421,11 @@ void handle_new_lap() {
 	// Delay for half a second
 	_delay_ms(500);
 	clear_terminal();
+	start_lap_timer();
 	move_cursor(10,13);
 	printf_P(PSTR("Level %d"), level);
 	move_cursor(10,14);
 	printf_P(PSTR("Score: %ld"), get_score());
-	start_lap_timer();
 }
 
 // Helper function to convert number of lives to number of LEDs.
