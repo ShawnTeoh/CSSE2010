@@ -157,7 +157,7 @@ void put_car_at_start(void) {
 	// initial position does not clash with the background.
 	srandom(get_timer0_clock_ticks());
 	// Keep on changing column until car does not clash
-	// with background (including 1 row before and after)
+	// with background (including 2 rows before)
 	do {
 		car_column = random() % 7;
 	} while(car_crashes_at(car_column, 1));
@@ -290,21 +290,18 @@ void scroll_background(void) {
 /////////////////////////////// Private (Helper) Functions /////////////////////
 
 // Return 1 if the car crashes if moved into the given column. We compare the car
-// position with the background in rows 1 and 2, rows 0, 3 and 4 as well if extend == 1
+// position with the background in rows 1 and 2, rows 3 and 4 as well if extend == 1
 static uint8_t car_crashes_at(uint8_t column, uint8_t extend) {
-	uint8_t start;
 	uint8_t end;
 	if(extend) {
-		start = 0;
 		end = 4;
 	} else {
-		start = 1;
 		end = 2;
 	}
 
 	// Check rows at this column
 	uint8_t i;
-	for (i=start;i<=end;i++) {
+	for(i=1;i<=end;i++) {
 		uint8_t background_row_number = (i + scroll_position) % NUM_GAME_ROWS;
 		uint8_t background_row_data = background_data[background_row_number];
 		if(background_row_data & (1<< column)) {
