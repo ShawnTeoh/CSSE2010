@@ -25,6 +25,7 @@
 #include "game.h"
 #include "joystick.h"
 #include "project.h"
+#include "leaderboard.h"
 
 #define F_CPU 8000000L
 #include <util/delay.h>
@@ -82,10 +83,14 @@ void initialise_hardware(void) {
 	// Setup serial port for 19200 baud communication with no echo
 	// of incoming characters
 	init_serial_stdio(19200,0);
-	
+
+	// Initialise timers
 	init_timer0();
 	init_timer1();
 	init_timer2();
+
+	// Read values from EEPROM
+	retrive_leaderboard();
 	
 	// Turn on global interrupts
 	sei();
@@ -97,13 +102,15 @@ void splash_screen(void) {
 	clear_terminal();
 	
 	hide_cursor();	// We don't need to see the cursor when we're just doing output
-	move_cursor(3,3);
+	move_cursor(35,5);
 	printf_P(PSTR("RallyRacer"));
 	
-	move_cursor(3,5);
+	move_cursor(20,7);
 	set_display_attribute(FG_GREEN);	// Make the text green
 	printf_P(PSTR("CSSE2010/7201 project by Thuan Song Teoh"));
 	set_display_attribute(FG_WHITE);	// Return to default colour (White)
+
+	leaderboard_terminal_output(); // Display leader board
 	
 	// Output the scrolling message to the LED matrix
 	// and wait for a push button to be pushed.
@@ -191,11 +198,13 @@ void new_game(void) {
 	start_lap_timer();
 
 	// Display level
+	set_display_attribute(FG_YELLOW);
 	move_cursor(10,13);
 	printf_P(PSTR("Level %d"), level);
+	set_display_attribute(FG_WHITE);
 
 	// Display score
-	move_cursor(10,14);
+	move_cursor(10,15);
 	printf_P(PSTR("Score: %ld"), get_score());
 }
 
@@ -285,14 +294,10 @@ void play_game(void) {
 			} else if(button==2 || joystick==1) {
 				if(speed > 100) {
 					speed -= 100;
-					move_cursor(10,15);
-					printf_P(PSTR("Speed: %d  "), speed);
 				}
 			} else if(button==1 || joystick==2) {
 				if(speed < level_speed[level]) {
 					speed += 100;
-					move_cursor(10,15);
-					printf_P(PSTR("Speed: %d  "), speed);
 				}
 			}
 			// else - invalid input or we're part way through an escape sequence -
@@ -324,7 +329,7 @@ void play_game(void) {
 				scroll_background();
 				if(moves < 5) {
 					add_to_score(5 - moves);
-					move_cursor(10,14);
+					move_cursor(10,15);
 					printf_P(PSTR("Score: %ld"), get_score());
 				}
 				moves = 0;
@@ -372,15 +377,21 @@ void handle_game_over() {
 	while(is_sound_playing()) {
 		; // Wait until sound finishes playing
 	}
+
+	is_highscore(); // Check if new high score achived
+
 	clear_terminal();
-	move_cursor(10,14);
+	set_display_attribute(FG_RED);
+	move_cursor(10,5);
 	// Print a message to the terminal. The spaces on the end of the message
 	// will ensure the "LAP COMPLETE" message is completely overwritten.
 	printf_P(PSTR("GAME OVER   "));
-	move_cursor(10,15);
+	set_display_attribute(FG_WHITE);
+	move_cursor(10,7);
 	printf_P(PSTR("Score: %ld"), get_score());
-	move_cursor(10,16);
+	move_cursor(10,8);
 	printf_P(PSTR("Press a button to start again"));
+	leaderboard_terminal_output(); // Display leader board
 	while(button_pushed() == -1) {
 		; // wait until a button has been pushed
 	}
@@ -397,15 +408,18 @@ void handle_new_lap() {
 	clear_terminal();
 	add_to_score(100); // Reward for completing a lap
 
-	move_cursor(10,13);
-	printf_P(PSTR("Level %d"), level);
-	move_cursor(10,14);
+	set_display_attribute(FG_GREEN);
+	move_cursor(10,12);
 	printf_P(PSTR("LAP COMPLETE"));
-	move_cursor(10,15);
-	printf_P(PSTR("Score: %ld"), get_score());
+	set_display_attribute(FG_YELLOW);
+	move_cursor(10,14);
+	printf_P(PSTR("Level %d"), level);
+	set_display_attribute(FG_WHITE);
 	move_cursor(10,16);
-	printf_P(PSTR("Lap Time: %d.%d second(s)"), get_lap_timer()/10, get_lap_timer()%10);
+	printf_P(PSTR("Score: %ld"), get_score());
 	move_cursor(10,17);
+	printf_P(PSTR("Lap Time: %d.%d second(s)"), get_lap_timer()/10, get_lap_timer()%10);
+	move_cursor(10,19);
 	printf_P(PSTR("Press a button to continue"));
 	// Increase level up till 9
 	if (level < 9) {
@@ -423,9 +437,11 @@ void handle_new_lap() {
 	_delay_ms(500);
 	clear_terminal();
 	start_lap_timer();
+	set_display_attribute(FG_YELLOW);
 	move_cursor(10,13);
 	printf_P(PSTR("Level %d"), level);
-	move_cursor(10,14);
+	set_display_attribute(FG_WHITE);
+	move_cursor(10,15);
 	printf_P(PSTR("Score: %ld"), get_score());
 }
 
