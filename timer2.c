@@ -67,6 +67,7 @@ void set_sound_type(uint8_t type) {
 	} else {
 		// No tune, so not playing
 		playing = 0;
+		sounded = 0;
 		OCR2A = F_CPU / 64 / 2000 - 1;
 	}
 }
@@ -96,8 +97,8 @@ void init_timer2(void) {
 	/* Set the output compare value for 2kHz */
 	OCR2A = F_CPU / 64 / 2000 - 1;
 
-	/* Set Port D pin 3 to be output */
-	DDRD = 1<<3;
+	/* Set Port D pin 7 (OCR2A) to be output */
+	DDRD = 1<<7;
 
 	/* Turn sound off at first */
 	set_sound_type(0);
@@ -108,33 +109,45 @@ uint8_t is_sound_playing(void) {
 }
 
 ISR(TIMER2_COMPA_vect) {
-	if(cur_sound[0]) {
+	if(!is_paused()) {
 		if(sounded < cur_sound[0]) {
 			current_time = get_timer1_clock_ticks();
-			if(!is_paused() && current_time <= prev_time + cur_sound[1]){
-				// Beep until specified length
-				if(get_bit(PIND,2)) {
-					// Not muted, toggle bit to create wave
-					PORTD ^= 1<<3;
-				} else {
-					// Muted, clear bit
-					PORTD &= ~(1<<3);
-				}
-			} else if(current_time >= prev_time + cur_sound[2]) {
+			if(current_time >= prev_time + cur_sound[2]) {
 				// Initiate next beep
 				prev_time = get_timer1_clock_ticks();
 				sounded++;
+				// Mute check
+				if(get_bit(PIND, 2)) {
+					TCCR2A |= 1<<COM2A0;
+				}
+			} else if(current_time >= prev_time + cur_sound[1]) {
+				// Beep until specified length
+				TCCR2A &= ~(1<<COM2A0);
+				// Clear bit to prevent noise
+				PORTD &= ~(1<<7);
 			} else {
-				// Clear bit, not beeping for now
-				PORTD &= ~(1<<3);
+				// Mute check
+				if(get_bit(PIND, 2)) {
+					// Not muted, enable OCR2A toggling
+					TCCR2A |= 1<<COM2A0;
+				} else {
+					// Muted, disable OCR2A toggling
+					TCCR2A &= ~(1<<COM2A0);
+					// Clear bit to prevent noise
+					PORTD &= ~(1<<7);
+				}
 			}
 		} else {
-			// Tune completed, reset bit
+			// Tune completed, turn off toggling
 			playing = 0;
-			PORTD &= ~(1<<3);
+			TCCR2A &= ~(1<<COM2A0);
+			// Clear bit to prevent noise
+			PORTD &= ~(1<<7);
 		}
 	} else {
-		// Not playing any tune, clear bit
-		PORTD &= ~(1<<3);
+		// Game paused, turn off toggling
+		TCCR2A &= ~(1<<COM2A0);
+		// Clear bit to prevent noise
+		PORTD &= ~(1<<7);
 	}
 }
