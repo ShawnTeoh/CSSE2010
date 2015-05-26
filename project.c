@@ -367,7 +367,7 @@ void play_game(void) {
 					// Reset the time of the last scroll
 					last_move_time = get_timer0_clock_ticks();
 				} else {
-					last_move_time = current_time;
+					last_move_time = get_timer0_clock_ticks();
 				}
 			}
 
@@ -392,6 +392,7 @@ void play_game(void) {
 					put_car_at_start();
 					reset_speed();
 					crashed_time = 0L;
+					last_move_time = get_timer0_clock_ticks();
 				}
 			}
 		}
@@ -460,19 +461,14 @@ void handle_new_lap() {
 	printf_P(PSTR("Score: %ld"), get_score());
 	move_cursor(10,17);
 	printf_P(PSTR("Lap Time: %d.%d second(s)"), get_lap_timer()/10, get_lap_timer()%10);
-	move_cursor(10,19);
-	printf_P(PSTR("Press a button to continue"));
 	// Increase level up till 9
 	if (level < 9) {
 		level++;
 	}
-	while(button_pushed() == -1) {
-		; // wait until a button has been pushed
-	}
 
 	// Inform that new lap is starting
 	set_display_attribute(TERM_BLINK);
-	move_cursor(10,21);
+	move_cursor(10,19);
 	printf_P(PSTR("Loading..."));
 	normal_display_mode();
 
