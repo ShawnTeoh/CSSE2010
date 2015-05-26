@@ -108,7 +108,7 @@ void splash_screen(void) {
 	move_cursor(20,7);
 	set_display_attribute(FG_GREEN);	// Make the text green
 	printf_P(PSTR("CSSE2010/7201 project by Thuan Song Teoh"));
-	set_display_attribute(FG_WHITE);	// Return to default colour (White)
+	normal_display_mode();	// Return to default colour (White)
 
 	leaderboard_terminal_output(); // Display leader board
 	
@@ -168,18 +168,21 @@ void new_game(void) {
 	// Reset level
 	level = 0;
 
+	// Inform that game is starting
+	set_display_attribute(TERM_BLINK);
+	move_cursor(10,10);
+	printf_P(PSTR("Loading..."));
+	normal_display_mode();
+
 	// Show level
 	level_splash_screen();
 
 	// Initialise the game and display
 	init_game();
-	
-	// Clear the serial terminal
-	clear_terminal();
-	
+
 	// Initialise the score
 	init_score();
-	
+
 	// Reset number of lives and display
 	set_disp_lives(0);
 
@@ -190,7 +193,7 @@ void new_game(void) {
 	// (The cast to void means the return value is ignored.)
 	(void)button_pushed();
 	clear_serial_input_buffer();
-	
+
 	// Delay for half a second
 	_delay_ms(500);
 
@@ -199,17 +202,18 @@ void new_game(void) {
 
 	// Display level
 	set_display_attribute(FG_YELLOW);
-	move_cursor(10,13);
+	move_cursor(30,2);
 	printf_P(PSTR("Level %d"), level);
-	set_display_attribute(FG_WHITE);
+	normal_display_mode();
 
 	// Display score
-	move_cursor(10,15);
+	move_cursor(30,4);
 	printf_P(PSTR("Score: %ld"), get_score());
+	move_cursor(37, 8);
 }
 
 void play_game(void) {
-	uint32_t current_time, last_move_time, last_car_flash;
+	uint32_t current_time, last_move_time, last_lap_timer_update, last_car_flash;
 	uint32_t crashed_time = 0L, powerup_time = 0L, last_powerup_flash = 0L;
 	int8_t button, joystick;
 	char serial_input, escape_sequence_char;
@@ -219,6 +223,7 @@ void play_game(void) {
 	// Get the current time and remember this as the last time the background scrolled.
 	current_time = get_timer0_clock_ticks();
 	last_move_time = current_time;
+	last_lap_timer_update = current_time;
 	
 	// We play the game while the player still has lives
 	while(get_lives() > 0) {
@@ -273,29 +278,40 @@ void play_game(void) {
 				PORTD &= ~(1<<3);
 			}
 			paused = !paused;
+			if(paused) {
+				set_display_attribute(TERM_BLINK);
+				move_cursor(36,6);
+				printf_P(PSTR("Paused..."));
+				normal_display_mode();
+				move_cursor(37, 8);
+			} else {
+				move_cursor(36,6);
+				printf_P(PSTR("         "));
+				move_cursor(37, 8);
+			}
 		}
 
 		if(!paused) {
 			joystick = joystick_direction(); // Update joystick direction
 
 			// Process the input.
-			if(button==3 || escape_sequence_char=='D' || serial_input=='L' || serial_input=='l' || joystick==3) {
+			if(button==3 || escape_sequence_char=='D' || serial_input=='A' || serial_input=='a' || joystick==3) {
 				// Attempt to move left
 				if (!has_car_crashed()) {
 					move_car_left();
 					moves++;
 				}
-			} else if(button==0 || escape_sequence_char=='C' || serial_input=='R' || serial_input=='r' || joystick==4) {
+			} else if(button==0 || escape_sequence_char=='C' || serial_input=='D' || serial_input=='d' || joystick==4) {
 				// Attempt to move right
 				if (!has_car_crashed()) {
 					move_car_right();
 					moves++;
 				}
-			} else if(button==2 || joystick==1) {
+			} else if(button==2 || escape_sequence_char=='A' || serial_input=='W' || serial_input=='w' || joystick==1) {
 				if(speed > 100) {
 					speed -= 100;
 				}
-			} else if(button==1 || joystick==2) {
+			} else if(button==1 || escape_sequence_char=='B' || serial_input=='S' || serial_input=='s' || joystick==2) {
 				if(speed < level_speed[level]) {
 					speed += 100;
 				}
@@ -320,6 +336,13 @@ void play_game(void) {
 				last_powerup_flash = current_time;
 			}
 
+			if(current_time >= last_lap_timer_update + 100) {
+				move_cursor(30,5);
+				printf_P(PSTR("Lap Time: %d.%d second(s)"), get_lap_timer()/10, get_lap_timer()%10);
+				move_cursor(37, 8);
+				last_lap_timer_update = current_time;
+			}
+
 			if(!has_car_crashed() && current_time >= last_move_time + speed) {
 				// <speed>ms has passed since the last time we scrolled
 				// the background, so scroll it now and check whether that means
@@ -329,8 +352,9 @@ void play_game(void) {
 				scroll_background();
 				if(moves < 5) {
 					add_to_score(5 - moves);
-					move_cursor(10,15);
+					move_cursor(30,4);
 					printf_P(PSTR("Score: %ld"), get_score());
+					move_cursor(37, 8);
 				}
 				moves = 0;
 				if(has_lap_finished()) {
@@ -378,6 +402,7 @@ void handle_game_over() {
 		; // Wait until sound finishes playing
 	}
 
+	ledmatrix_clear();
 	is_highscore(); // Check if new high score achived
 
 	clear_terminal();
@@ -386,7 +411,7 @@ void handle_game_over() {
 	// Print a message to the terminal. The spaces on the end of the message
 	// will ensure the "LAP COMPLETE" message is completely overwritten.
 	printf_P(PSTR("GAME OVER   "));
-	set_display_attribute(FG_WHITE);
+	normal_display_mode();
 	move_cursor(10,7);
 	printf_P(PSTR("Score: %ld"), get_score());
 	move_cursor(10,8);
@@ -395,7 +420,10 @@ void handle_game_over() {
 	while(button_pushed() == -1) {
 		; // wait until a button has been pushed
 	}
-	
+	set_display_attribute(TERM_BLINK);
+	move_cursor(10,10);
+	printf_P(PSTR("Loading..."));
+	normal_display_mode();
 }
 
 void handle_new_lap() {
@@ -406,6 +434,7 @@ void handle_new_lap() {
 		; // Wait until sound finishes playing
 	}
 	clear_terminal();
+	ledmatrix_clear();
 	add_to_score(100); // Reward for completing a lap
 
 	set_display_attribute(FG_GREEN);
@@ -414,7 +443,7 @@ void handle_new_lap() {
 	set_display_attribute(FG_YELLOW);
 	move_cursor(10,14);
 	printf_P(PSTR("Level %d"), level);
-	set_display_attribute(FG_WHITE);
+	normal_display_mode();
 	move_cursor(10,16);
 	printf_P(PSTR("Score: %ld"), get_score());
 	move_cursor(10,17);
@@ -428,6 +457,10 @@ void handle_new_lap() {
 	while(button_pushed() == -1) {
 		; // wait until a button has been pushed
 	}
+	set_display_attribute(TERM_BLINK);
+	move_cursor(10,21);
+	printf_P(PSTR("Loading..."));
+	normal_display_mode();
 	level_splash_screen(); // Show level
 	init_game();	// This will need to be changed for multiple lives
 	set_disp_lives(1); // Reward for completing a lap
@@ -435,14 +468,14 @@ void handle_new_lap() {
 
 	// Delay for half a second
 	_delay_ms(500);
-	clear_terminal();
 	start_lap_timer();
 	set_display_attribute(FG_YELLOW);
-	move_cursor(10,13);
+	move_cursor(30,2);
 	printf_P(PSTR("Level %d"), level);
-	set_display_attribute(FG_WHITE);
-	move_cursor(10,15);
+	normal_display_mode();
+	move_cursor(30,4);
 	printf_P(PSTR("Score: %ld"), get_score());
+	move_cursor(37, 8);
 }
 
 // Helper function to convert number of lives to number of LEDs.

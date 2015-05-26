@@ -12,16 +12,17 @@
 
 #include "game.h"
 #include "ledmatrix.h"
-#include "pixel_colour.h"
 #include "timer0.h"
 #include "timer2.h"
+#include "terminalio.h"
+#include "term.h"
 #include <stdint.h>
 #include <stdlib.h>
 
 ///////////////////////////////// Global variables //////////////////////
 // car_column stores the current position of the car. Game columns are numbered
 // from 0 (left) to 7 (right). The car spans game rows 1 and 2.
-static int8_t car_column;
+static int8_t car_column = 0;
 #define CAR_START_ROW 1
 
 // Position variables of power-up
@@ -97,13 +98,6 @@ static uint8_t powerup = 0;
 // Flag for power-up display (1 on, 0 off)
 static uint8_t disp_powerup = 0;
 
-// Colours
-#define COLOUR_BACKGROUND	COLOUR_LIGHT_GREEN
-#define COLOUR_CAR			COLOUR_LIGHT_ORANGE
-#define COLOUR_CRASH		COLOUR_RED	
-#define COLOUR_FINISH_LINE	COLOUR_YELLOW		/* Also the start line */
-#define COLOUR_POWERUP		COLOUR_GREEN
-
 // Variable to contain current car colour
 static uint8_t car_colour = COLOUR_CAR;
 
@@ -119,6 +113,7 @@ static void redraw_background(void);
 static void redraw_game_row(uint8_t row);
 static void draw_start_or_finish_line(uint8_t row);
 static void redraw_car();
+static void erase_car();
 static void redraw_powerup();
 static uint8_t powerup_display(void);
 static uint8_t powerup_crashes_at(uint8_t column);
@@ -144,6 +139,9 @@ void init_game(void) {
 	place_powerup();
 	powerup = 0; // Always turn off powerup at start of game
 
+	clear_terminal();
+	set_scroll_region(8, 23);
+	term_redraw_background();
 	redraw_background();
 	
 	// Add a car to the display. (This will redraw the car.)
@@ -154,6 +152,7 @@ void init_game(void) {
 void put_car_at_start(void) {
 	// Initial starting position of car. It must be guaranteed that this
 	// initial position does not clash with the background.
+	erase_car();
 	srandom(get_timer0_clock_ticks());
 	// Keep on changing column until car does not clash
 	// with background (including 2 rows before)
@@ -173,6 +172,7 @@ void put_car_at_start(void) {
 void move_car_left(void) {
 	if(car_column != 0) {
 		// Car not at left hand side
+		erase_car();
 		car_column--;
 		car_crashed = car_crashes_at(car_column, 0);
 		// Check if car on power-up pixel
@@ -184,6 +184,7 @@ void move_car_left(void) {
 void move_car_right(void) {
 	if(car_column != 7) {
 		// Car not at right hand side
+		erase_car();
 		car_column++;
 		car_crashed = car_crashes_at(car_column, 0);
 		// Check if car on power-up pixel
@@ -275,12 +276,20 @@ void scroll_background(void) {
 	// For speed purposes, we don't redraw the whole display, we
 	// shift the display down (right in the sense of the
 	// LED matrix) and redraw the car and draw the new row 15
+	erase_car();
 	ledmatrix_shift_display_right();
-	if(powerup_display()) {
-		redraw_powerup();
-	}
+	scroll_down();
 	redraw_car();
 	redraw_game_row(15);
+	if(powerup_display()) {
+		redraw_powerup();
+		term_draw_powerup(powerup_column);
+	}
+}
+
+uint8_t get_background_data(uint8_t row) {
+	uint8_t race_row = scroll_position + row;
+	return background_data[race_row % NUM_GAME_ROWS];
 }
 
 /////////////////////////////// Private (Helper) Functions /////////////////////
@@ -330,6 +339,7 @@ static void redraw_game_row(uint8_t row) {
 	uint8_t race_row = scroll_position + row;
 	if(race_row - initial_scroll == 0 || race_row - initial_scroll == RACE_DISTANCE) {
 		draw_start_or_finish_line(row);
+		term_draw_start_or_finish_line(row);
 	} else {
 		uint8_t background_row_data = background_data[race_row % NUM_GAME_ROWS];
 		for(i=0;i<=7;i++) {
@@ -341,6 +351,7 @@ static void redraw_game_row(uint8_t row) {
 			}
 		}
 		ledmatrix_update_column(15 - row, row_display_data);
+		term_redraw_game_row(row);
 	}
 }
 
@@ -356,15 +367,41 @@ static void draw_start_or_finish_line(uint8_t row) {
 
 // Redraw the car in its current position.
 static void redraw_car(void) {
-	// Remove "broken" walls or crashed car
-	redraw_game_row(0);
-	redraw_game_row(1);
-	redraw_game_row(2);
 	if(has_car_crashed()) {
 		car_colour = COLOUR_CRASH;
 	}
 	ledmatrix_update_pixel(15 - CAR_START_ROW, car_column, car_colour);
 	ledmatrix_update_pixel(15 - (CAR_START_ROW+1), car_column, car_colour);
+	term_redraw_car(car_colour, car_column);
+}
+
+uint8_t check_if_background(uint8_t row, uint8_t column) {
+	uint8_t race_row = scroll_position + row;
+	uint8_t background_row_data = background_data[race_row % NUM_GAME_ROWS];
+	return background_row_data & (1<<column);
+}
+
+// Erase the car (we assume it hasn't crashed - so we just replace
+// the car position with black)
+static void erase_car(void) {
+	uint8_t bg1, bg2;
+	if(check_if_background(CAR_START_ROW, car_column)) {
+		ledmatrix_update_pixel(15 - CAR_START_ROW, car_column, COLOUR_BACKGROUND);
+		bg1 = 1;
+	} else {
+		ledmatrix_update_pixel(15 - CAR_START_ROW, car_column, COLOUR_BLACK);
+		bg1 = 0;
+	}
+
+	if(check_if_background(CAR_START_ROW+1, car_column)) {
+		ledmatrix_update_pixel(15 - (CAR_START_ROW+1), car_column, COLOUR_BACKGROUND);
+		bg2 = 1;
+	} else {
+		ledmatrix_update_pixel(15 - (CAR_START_ROW+1), car_column, COLOUR_BLACK);
+		bg2 = 0;
+	}
+
+	term_erase_car(bg1, bg2, car_column);
 }
 
 // Update power-up pixel

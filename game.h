@@ -19,6 +19,15 @@
 
 #include <stdint.h>
 
+#include "pixel_colour.h"
+
+// Colours
+#define COLOUR_BACKGROUND	COLOUR_LIGHT_GREEN
+#define COLOUR_CAR			COLOUR_LIGHT_ORANGE
+#define COLOUR_CRASH		COLOUR_RED
+#define COLOUR_FINISH_LINE	COLOUR_YELLOW		/* Also the start line */
+#define COLOUR_POWERUP		COLOUR_GREEN
+
 // Reset the game. Get the background ready and place the car in the 
 // initial position. Output this to the LED matrix.
 void init_game(void);
@@ -72,6 +81,8 @@ void blink_powerup();
 
 // Toggle car colour
 void toggle_car_colour(uint8_t reset);
+
+uint8_t get_background_data(uint8_t row);
 
 /////////////////////// UPDATE FUNCTIONS /////////////////////////////////////
 // Scroll the background by one row and update the display. Note that this

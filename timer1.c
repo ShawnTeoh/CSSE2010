@@ -110,8 +110,6 @@ ISR(TIMER1_COMPA_vect) {
 	/* Increment our clock tick counters if timer started */
 	if(!is_paused() && lap_timer) {
 		lap_clock_ticks++;
-		move_cursor(10,16);
-		printf_P(PSTR("Lap Time: %d.%d second(s)"), lap_clock_ticks/10, lap_clock_ticks%10);
 	}
 	if(!is_paused()) {
 		clock_ticks++;

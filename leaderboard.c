@@ -152,6 +152,7 @@ void leaderboard_terminal_output(void) {
 	draw_horizontal_line(15, 0, 79);
 	move_cursor(34, 16);
 	set_display_attribute(FG_YELLOW);
+	set_display_attribute(TERM_UNDERSCORE);
 	printf_P(PSTR("LEADER BOARD"));
 	normal_display_mode();
 	move_cursor(29, 18);
