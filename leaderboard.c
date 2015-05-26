@@ -12,6 +12,7 @@
 #include <avr/eeprom.h>
 #include <avr/pgmspace.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 
@@ -75,7 +76,8 @@ static void update_scores(char* name, uint8_t rank) {
  */
 static char* get_initials(void) {
 	// Initialise empty name at first (empty names are still valid)
-	char* name = "     ";
+	char tmp[6];
+	memset(tmp, 0, 6);
 	char input;
 	uint8_t pos = 0;
 	uint8_t escape_seq = 0;
@@ -101,23 +103,25 @@ static char* get_initials(void) {
 			escape_seq = 0;
 		} else if(isalpha(input) && pos < 5) {
 			// Only alphabets are valid, maximum of 5 characters
-			name[pos] = input;
+			tmp[pos] = input;
 			pos++;
 		} else if(input == BACK_SPACE) {
 			// Backspace key pressed, clear previous character
 			if(pos > 0) {
 				pos--;
-				name[pos] = ' ';
+				tmp[pos] = '\0';
 			} else {
-				name[pos] = ' ';
+				tmp[pos] = '\0';
 			}
 		}
 		// Redisplay updated name variable
 		move_cursor(38, 15);
-		printf_P(PSTR("%s"), name);
+		printf_P(PSTR("%-5s"), tmp);
 		move_cursor(38+pos, 15);
 	}
 
+	char* name = "     ";
+	strcpy(name, tmp);
 	return name;
 }
 
