@@ -144,7 +144,6 @@ void init_game(void) {
 	clear_terminal();
 	set_scroll_region(8, 23);
 	redraw_background();
-	term_redraw_background();
 	
 	// Add a car to the display. (This will redraw the car.)
 	put_car_at_start();
@@ -286,7 +285,6 @@ void scroll_background(void) {
 	if(powerup_display()) {
 		// Display power-up pixel
 		redraw_powerup();
-		term_draw_powerup(powerup_column);
 	}
 }
 
@@ -410,6 +408,7 @@ static void erase_car(void) {
 // Update power-up pixel
 static void redraw_powerup(void) {
 	ledmatrix_update_pixel(15 - powerup_row, powerup_column, powerup_colour);
+	term_redraw_powerup(powerup_row, powerup_column, powerup_colour); // Do the same for terminal output
 }
 
 // Display power-up pixel iff position reached, within rows 0-15 and power-up not enabled

@@ -20,21 +20,6 @@
 #include "term.h"
 #include "game.h"
 
-/* 1 if power-up already displayed, else 0.
- * Needed because using blinking text, so only required to display once.
- * In LED matrix the power-up pixel has to be toggled manually.
- */
-static uint8_t powerup_displayed = 0;
-
-/* redraw_background() in game.c already invoked the actual redrawing.
- * Main use of this is just to reset the powerup_displayed variable.
- * By doing this, it is assumed that redraw_background() is only called at each
- * new game.
- */
-void term_redraw_background(void) {
-	powerup_displayed = 0;
-}
-
 /* Does the same thing as redraw_game_row() in game.c.
  */
 void term_redraw_game_row(uint8_t row) {
@@ -115,18 +100,16 @@ void term_erase_car(uint8_t bg1, uint8_t bg2, uint8_t column) {
 	move_cursor(37,8);
 }
 
-/* Does the same thing as redraw_powerup() in game.c, but
- * only doing it once.
+/* Does the same thing as redraw_powerup() in game.c.
  */
-void term_draw_powerup(uint8_t column) {
-	if(!powerup_displayed) {
-		move_cursor(37+column,8);
-		set_display_attribute(TERM_BLINK);
-		set_display_attribute(TERM_BRIGHT);
-		set_display_attribute(FG_GREEN);
-		printf_P(PSTR("P"));
+void term_redraw_powerup(uint8_t row, uint8_t column, uint8_t colr) {
+	move_cursor(37+column,23-row);
+	if(colr == COLOUR_POWERUP) {
+		set_display_attribute(BG_GREEN);
+		printf_P(PSTR(" "));
 		normal_display_mode();
-		move_cursor(37,8);
+	} else {
+		printf_P(PSTR(" "));
 	}
-	powerup_displayed = 1;
+	move_cursor(37,8);
 }

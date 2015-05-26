@@ -171,7 +171,8 @@ void new_game(void) {
 	level = 0;
 
 	// Inform that game is starting
-	set_display_attribute(TERM_BLINK);
+	set_display_attribute(FG_MAGENTA);
+	set_display_attribute(TERM_BRIGHT);
 	move_cursor(10,10);
 	printf_P(PSTR("Loading..."));
 	normal_display_mode();
@@ -281,7 +282,8 @@ void play_game(void) {
 			}
 			paused = !paused;
 			if(paused) {
-				set_display_attribute(TERM_BLINK);
+				set_display_attribute(FG_MAGENTA);
+				set_display_attribute(TERM_BRIGHT);
 				move_cursor(36,6);
 				printf_P(PSTR("Paused..."));
 				normal_display_mode();
@@ -431,12 +433,6 @@ void handle_game_over() {
 	while(button_pushed() == -1) {
 		; // wait until a button has been pushed
 	}
-
-	// Inform that game is starting
-	set_display_attribute(TERM_BLINK);
-	move_cursor(10,10);
-	printf_P(PSTR("Loading..."));
-	normal_display_mode();
 }
 
 void handle_new_lap() {
@@ -467,13 +463,20 @@ void handle_new_lap() {
 	}
 
 	// Inform that new lap is starting
-	set_display_attribute(TERM_BLINK);
+	set_display_attribute(FG_MAGENTA);
+	set_display_attribute(TERM_BRIGHT);
 	move_cursor(10,19);
 	printf_P(PSTR("Loading..."));
 	normal_display_mode();
 
 	level_splash_screen(); // Show level
 	init_game();
+
+	// Clear a button push or serial input if any are waiting
+	// (The cast to void means the return value is ignored.)
+	(void)button_pushed();
+	clear_serial_input_buffer();
+
 	set_disp_lives(1); // Reward for completing a lap
 	reset_speed(); // Reset speed of car according to level speed
 
