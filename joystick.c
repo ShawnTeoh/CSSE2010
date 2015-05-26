@@ -3,7 +3,17 @@
  *
  * Author: Thuan Song Teoh
  *
- * Code logic to determine joytick position and autofire.
+ * Code logic to determine joytick position and auto fire.
+ * For smoother joystick movement, a direction is first triggered at half position,
+ * then released at quarter position. The diagram below illustrates this:
+ *
+ *             Trigger Release   Release Trigger
+ *                |     |           |     |
+ *      |---------|-----|-----|-----|-----|---------|
+ *      0        257   386   513   641   768       1023
+ *      |                     |                     |
+ * Max left/down            Middle            Max right/up
+ *
  */
 
 #include <avr/io.h>
@@ -55,25 +65,35 @@ uint8_t joystick_direction(void) {
 	uint32_t current_time;
 
 	get_adc_values();
-	if(adc_x < 50) {
+	if(adc_x < 257) {
 		direction = 3;
-	} else if(adc_x > 900) {
+	} else if(adc_x > 768) {
 		direction = 4;
-	} else if(adc_y > 900) {
+	} else if(adc_y > 768) {
 		direction = 1;
-	} else if(adc_y < 50) {
+	} else if(adc_y < 257) {
 		direction = 2;
 	} else {
-		direction = -1;
+		if(prev_direction == 3) {
+			direction = (adc_x < 386 ? 3:-1);
+		} else if(prev_direction == 4) {
+			direction = (adc_x > 641 ? 4:-1);
+		} else if(prev_direction == 1) {
+			direction = (adc_y > 641 ? 1:-1);
+		} else if(prev_direction == 2) {
+			direction = (adc_y < 386 ? 2:-1);
+		} else {
+			direction = -1;
+		}
 	}
 
 	// Only process if joystick not in middle
 	if(direction > 0) {
 		// If same direction as previously, check if 500ms has elapsed
-		// (autofire) or else assume at middle
-		if (prev_direction == direction) {
+		// (auto fire) or else assume at middle
+		if(prev_direction == direction) {
 			current_time = get_timer0_clock_ticks();
-			if(current_time < prev_time + 500) {
+			if(current_time < prev_time + 300) {
 				return -1;
 			}
 		}
