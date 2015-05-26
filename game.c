@@ -119,7 +119,6 @@ static void redraw_background(void);
 static void redraw_game_row(uint8_t row);
 static void draw_start_or_finish_line(uint8_t row);
 static void redraw_car();
-static void erase_car();
 static void redraw_powerup();
 static uint8_t powerup_display(void);
 static uint8_t powerup_crashes_at(uint8_t column);
@@ -174,7 +173,6 @@ void put_car_at_start(void) {
 void move_car_left(void) {
 	if(car_column != 0) {
 		// Car not at left hand side
-		erase_car();
 		car_column--;
 		car_crashed = car_crashes_at(car_column, 0);
 		// Check if car on power-up pixel
@@ -186,7 +184,6 @@ void move_car_left(void) {
 void move_car_right(void) {
 	if(car_column != 7) {
 		// Car not at right hand side
-		erase_car();
 		car_column++;
 		car_crashed = car_crashes_at(car_column, 0);
 		// Check if car on power-up pixel
@@ -276,9 +273,8 @@ void scroll_background(void) {
 	}
 	
 	// For speed purposes, we don't redraw the whole display, we
-	// erase the car, shift the display down (right in the sense of the 
+	// shift the display down (right in the sense of the
 	// LED matrix) and redraw the car and draw the new row 15
-	erase_car();
 	ledmatrix_shift_display_right();
 	if(powerup_display()) {
 		redraw_powerup();
@@ -369,13 +365,6 @@ static void redraw_car(void) {
 	}
 	ledmatrix_update_pixel(15 - CAR_START_ROW, car_column, car_colour);
 	ledmatrix_update_pixel(15 - (CAR_START_ROW+1), car_column, car_colour);
-}
-
-// Erase the car (we assume it hasn't crashed - so we just replace
-// the car position with black)
-static void erase_car(void) {
-	ledmatrix_update_pixel(15 - CAR_START_ROW, car_column, COLOUR_BLACK);
-	ledmatrix_update_pixel(15 - (CAR_START_ROW+1), car_column, COLOUR_BLACK);
 }
 
 // Update power-up pixel
