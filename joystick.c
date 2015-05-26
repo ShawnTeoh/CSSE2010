@@ -24,7 +24,7 @@ void init_joystick(void) {
 }
 
 // Helper function to retrive and convert ADC values
-void get_adc_values(void) {
+static void get_adc_values(void) {
 	// Read x axis
 	ADMUX &= ~1;
 	// Start the ADC conversion

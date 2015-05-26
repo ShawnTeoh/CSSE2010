@@ -21,10 +21,10 @@
 #include "leaderboard.h"
 
 // Memory address of stored variable in EEPROM
-Highscore EEMEM scores[MAX_NUM];
+static Highscore EEMEM scores[MAX_NUM];
 
 // High scores are stored as an array of Highscore structures
-Highscore current_score[MAX_NUM];
+static Highscore current_score[MAX_NUM];
 
 void retrive_leaderboard(void) {
 	eeprom_read_block((void*)&current_score, (const void*)&scores, sizeof(scores));
@@ -32,14 +32,14 @@ void retrive_leaderboard(void) {
 
 /* Update values stored in EEPROM.
  */
-void update_leaderboard(void) {
+static void update_leaderboard(void) {
 	eeprom_update_block((const void*)&current_score, (void*)&scores, sizeof(scores));
 }
 
 /* Helper function to compare current scores with scores in leader board.
  * Returns -1 if not a new record, else 0 to 4 representing the ranking.
  */
-int8_t compare_score(void) {
+static int8_t compare_score(void) {
 	uint8_t rank;
 	for(rank=0;rank<5;rank++) {
 		// Only compare if value initialised
@@ -57,7 +57,7 @@ int8_t compare_score(void) {
 
 /* Helper function to reposition old records and add new record.
  */
-void update_scores(char* name, uint8_t rank) {
+static void update_scores(char* name, uint8_t rank) {
 	uint8_t pos;
 	// Move old records down by 1 ranking to make space for new entry
 	for(pos=MAX_NUM-1;pos>rank;pos--) {
@@ -73,7 +73,7 @@ void update_scores(char* name, uint8_t rank) {
 
 /* Helper function to get player's initials.
  */
-char* get_initials(void) {
+static char* get_initials(void) {
 	// Initialise empty name at first (empty names are still valid)
 	char* name = "     ";
 	char input;
