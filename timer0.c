@@ -1,7 +1,7 @@
 /*
  * timer0.c
  *
- * Author: Peter Sutton
+ * Author: Peter Sutton.  Modified by Thuan Song Teoh.
  *
  * We setup timer0 to generate an interrupt every 1ms
  * We update a global clock tick variable - whose value
@@ -75,7 +75,7 @@ uint32_t get_timer0_clock_ticks(void) {
 }
 
 ISR(TIMER0_COMPA_vect) {
-	/* Increment our clock tick count */
+	/* Increment our clock tick count if not paused */
 	if(!is_paused()) {
 		clock_ticks++;
 	}

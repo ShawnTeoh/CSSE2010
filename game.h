@@ -82,6 +82,7 @@ void blink_powerup();
 // Toggle car colour
 void toggle_car_colour(uint8_t reset);
 
+// Returns background data at specified row
 uint8_t get_background_data(uint8_t row);
 
 /////////////////////// UPDATE FUNCTIONS /////////////////////////////////////

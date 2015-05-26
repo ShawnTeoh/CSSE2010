@@ -1,7 +1,7 @@
 /*
  * timer0.h
  *
- * Author: Peter Sutton
+ * Author: Peter Sutton. Modified by Thuan Song Teoh.
  *
  * We set up timer 0 to give us an interrupt
  * every millisecond. Tasks that have to occur

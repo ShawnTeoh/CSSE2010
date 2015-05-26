@@ -4,8 +4,9 @@
  * Author: Thuan Song Teoh
  * 
  * We setup timer1 to generate an interrupt every 100ms
- * We update a global clock tick variable - whose value
- * can be retrieved using the get_lap_timer() function.
+ * We update 2 global clock tick variables - whose value
+ * can be retrieved using the get_lap_timer() and get_timer1_clock_ticks()
+ * functions.
  */
 
 #include <avr/io.h>
@@ -17,10 +18,14 @@
 #include "terminalio.h"
 #include "project.h"
 
-/* Our internal clock tick counters - incremented every 100
- * milliseconds. clock_ticks will overflow every ~49 days.*/
-static volatile uint16_t lap_clock_ticks;
+/* Our internal clock tick counter - incremented every 100
+ * milliseconds. clock_ticks will overflow every ~49 days. */
 static volatile uint32_t clock_ticks;
+
+/* Our internal clock tick counter for lap timer - incremented every 100
+ * milliseconds. lap_clock_ticks will overflow every ~1.8 hours. Difference with
+ * clock_tick is that lap_clock_ticks will get reset. */
+static volatile uint16_t lap_clock_ticks;
 
 // Counter toggle for lap timer (0 off, 1 on)
 static volatile uint8_t lap_timer = 0;
@@ -37,13 +42,13 @@ void init_timer1(void) {
 	/* Reset clock ticks count */
 	lap_clock_ticks = 0;
 	clock_ticks = 0L;
-	
+
 	/* Clear the timer */
 	TCNT1 = 0;
 
 	/* Set the output compare value to be 12499 */
 	OCR1A = 12499;
-	
+
 	/* Set the timer to clear on compare match (CTC mode)
 	 * and to divide the clock by 64. This starts the timer
 	 * running.
@@ -56,7 +61,7 @@ void init_timer1(void) {
 	 * before the interrupts will fire.
 	 */
 	TIMSK1 |= (1<<OCIE1A);
-	
+
 	/* Make sure the interrupt flag is cleared by writing a 
 	 * 1 to it.
 	 */
@@ -107,7 +112,7 @@ void stop_lap_timer(void) {
 }
 
 ISR(TIMER1_COMPA_vect) {
-	/* Increment our clock tick counters if timer started */
+	/* Increment our clock tick counters if timer started and not paused */
 	if(!is_paused() && lap_timer) {
 		lap_clock_ticks++;
 	}

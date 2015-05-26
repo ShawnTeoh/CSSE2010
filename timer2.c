@@ -53,7 +53,7 @@ uint8_t get_bit(uint8_t value, uint8_t index) {
 	 * and do the operation discussed above in the note.
 	 */
 
-	uint8_t bit = !!(value & (1 << index));
+	uint8_t bit = !!(value & (1<<index));
 	return bit;
 }
 
@@ -88,7 +88,7 @@ void init_timer2(void) {
 	 * before the interrupts will fire.
 	 */
 	TIMSK2 |= (1<<OCIE2A);
-	
+
 	/* Make sure the interrupt flag is cleared by writing a 
 	 * 1 to it.
 	 */

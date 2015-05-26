@@ -1,7 +1,7 @@
 /*
  * scrolling_char_display.h
  *
- * Author: Peter Sutton
+ * Author: Peter Sutton.  Modified by Thuan Song Teoh.
  */
 
 #ifndef SCROLLING_CHAR_DISPLAY_H_

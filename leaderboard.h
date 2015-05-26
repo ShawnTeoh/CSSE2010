@@ -15,7 +15,7 @@
 // Maximum number of high scores
 #define MAX_NUM 5
 
-// Keyboard character constants
+// Keyboard character ASCII constants
 #define ESCAPE_CHAR 27
 #define BACK_SPACE 127
 

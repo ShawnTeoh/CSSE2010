@@ -2,6 +2,7 @@
  * timer2.h
  *
  * Author: Thuan Song Teoh
+ *
  * We set up timer 2 to give us an interrupt
  * every millisecond. Buzzer is manipulated via the 
  * interrupt handler (in timer2.c).

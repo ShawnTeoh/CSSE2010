@@ -85,22 +85,24 @@ static char* get_initials(void) {
 			; // Wait for serial data
 		}
 
+		// Part of code adapted from project.c to ignore escape sequences
 		input = fgetc(stdin);
 		if(input == '\n') {
 			// Enter key pressed, save name
 			break;
-		} else if(input == ESCAPE_CHAR || input == '[') {
-			// Receiving escape sequence
-			escape_seq = 1;
+		} else if(escape_seq == 0 && input == ESCAPE_CHAR) {
+			// We've hit the first character in an escape sequence (escape)
+			escape_seq++;
+		} else if(escape_seq == 1 && input == '[') {
+			// We've hit the second character in an escape sequence
+			escape_seq++;
+		} else if(escape_seq == 2) {
+			// Third (and last) character in the escape sequence
+			escape_seq = 0;
 		} else if(isalpha(input) && pos < 5) {
 			// Only alphabets are valid, maximum of 5 characters
-			if(escape_seq) {
-				// End of escape sequence usually an alphabet, reset flag
-				escape_seq = 0;
-			} else {
-				name[pos] = input;
-				pos++;
-			}
+			name[pos] = input;
+			pos++;
 		} else if(input == BACK_SPACE) {
 			// Backspace key pressed, clear previous character
 			if(pos > 0) {
@@ -113,6 +115,7 @@ static char* get_initials(void) {
 		// Redisplay updated name variable
 		move_cursor(38, 15);
 		printf_P(PSTR("%s"), name);
+		move_cursor(38+pos, 15);
 	}
 
 	return name;
@@ -124,22 +127,22 @@ void is_highscore(void) {
 		// Display prompt to enter player initials
 		clear_terminal();
 		set_display_attribute(FG_GREEN);
-		move_cursor(32, 8);
+		move_cursor(32,8);
 		printf_P(PSTR("CONGRATULATIONS!"));
 		normal_display_mode();
-		move_cursor(28, 10);
+		move_cursor(28,10);
 		printf_P(PSTR("You got a new high score!"));
-		move_cursor(23, 12);
+		move_cursor(23,12);
 		printf_P(PSTR("Please enter your initials (max 5)"));
-		move_cursor(30, 13);
+		move_cursor(30,13);
 		printf_P(PSTR("Press enter to save:"));
 
 		// Read from stdin
-		move_cursor(38, 15);
+		move_cursor(38,15);
 		set_display_attribute(FG_CYAN);
 		char* name = get_initials();
 		normal_display_mode();
-		move_cursor(38, 16);
+		move_cursor(38,16);
 
 		// Update leader board and store in EEPROM
 		update_scores(name, ranking);
@@ -150,12 +153,12 @@ void is_highscore(void) {
 void leaderboard_terminal_output(void) {
 	// Pretty printing of leader board
 	draw_horizontal_line(15, 0, 79);
-	move_cursor(34, 16);
+	move_cursor(34,16);
 	set_display_attribute(FG_YELLOW);
 	set_display_attribute(TERM_UNDERSCORE);
 	printf_P(PSTR("LEADER BOARD"));
 	normal_display_mode();
-	move_cursor(29, 18);
+	move_cursor(29,18);
 	set_display_attribute(FG_YELLOW);
 	printf_P(PSTR("Name      ->     Score"));
 	normal_display_mode();
@@ -163,10 +166,10 @@ void leaderboard_terminal_output(void) {
 	uint8_t i;
 	for(i=0;i<MAX_NUM;i++) {
 		if(current_score[i].signature == SIGNATURE) {
-			move_cursor(26, 19+i);
+			move_cursor(26,19+i);
 			printf_P(PSTR("%d. %-5s     ->     %ld"), i+1, current_score[i].name, current_score[i].score);
 		} else {
-			move_cursor(26, 19+i);
+			move_cursor(26,19+i);
 			printf_P(PSTR("%d."), i+1);
 		}
 	}

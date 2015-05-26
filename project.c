@@ -34,10 +34,12 @@
 // given here
 void initialise_hardware(void);
 void splash_screen(void);
+void level_splash_screen(void);
 void new_game(void);
 void play_game(void);
 void handle_game_over(void);
 void handle_new_lap(void);
+void display_lives(void);
 void set_disp_lives(uint8_t num);
 void reset_speed(void);
 
@@ -336,6 +338,7 @@ void play_game(void) {
 				last_powerup_flash = current_time;
 			}
 
+			// Only update lap timer every 0.1s
 			if(current_time >= last_lap_timer_update + 100) {
 				move_cursor(30,5);
 				printf_P(PSTR("Lap Time: %d.%d second(s)"), get_lap_timer()/10, get_lap_timer()%10);
@@ -396,16 +399,22 @@ void play_game(void) {
 }
 
 void handle_game_over() {
+	// Stop timing
 	stop_lap_timer();
+
+	// Play sound
 	set_sound_type(2);
 	while(is_sound_playing()) {
 		; // Wait until sound finishes playing
 	}
 
+	// Clear outputs
 	ledmatrix_clear();
+	show_cursor();
 	is_highscore(); // Check if new high score achived
-
+	hide_cursor();
 	clear_terminal();
+
 	set_display_attribute(FG_RED);
 	move_cursor(10,5);
 	// Print a message to the terminal. The spaces on the end of the message
@@ -417,9 +426,12 @@ void handle_game_over() {
 	move_cursor(10,8);
 	printf_P(PSTR("Press a button to start again"));
 	leaderboard_terminal_output(); // Display leader board
+
 	while(button_pushed() == -1) {
 		; // wait until a button has been pushed
 	}
+
+	// Inform that game is starting
 	set_display_attribute(TERM_BLINK);
 	move_cursor(10,10);
 	printf_P(PSTR("Loading..."));
@@ -457,18 +469,25 @@ void handle_new_lap() {
 	while(button_pushed() == -1) {
 		; // wait until a button has been pushed
 	}
+
+	// Inform that new lap is starting
 	set_display_attribute(TERM_BLINK);
 	move_cursor(10,21);
 	printf_P(PSTR("Loading..."));
 	normal_display_mode();
+
 	level_splash_screen(); // Show level
-	init_game();	// This will need to be changed for multiple lives
+	init_game();
 	set_disp_lives(1); // Reward for completing a lap
 	reset_speed(); // Reset speed of car according to level speed
 
 	// Delay for half a second
 	_delay_ms(500);
+
+	// Start timing
 	start_lap_timer();
+
+	// Update HUD
 	set_display_attribute(FG_YELLOW);
 	move_cursor(30,2);
 	printf_P(PSTR("Level %d"), level);

@@ -1,7 +1,7 @@
 /*
  * scrolling_char_display.c
  *
- * Author: Peter Sutton
+ * Author: Peter Sutton. Modified by Thuan Song Teoh.
  *
  * This is an example of how the LED display board can be used. 
  * This program scrolls a message from right to left on the

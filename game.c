@@ -10,14 +10,15 @@
  * Display rows (0 to 7) are game columns 0 (left) to 7 (right) in this orientation.
  */ 
 
+#include <stdint.h>
+#include <stdlib.h>
+
 #include "game.h"
 #include "ledmatrix.h"
 #include "timer0.h"
 #include "timer2.h"
 #include "terminalio.h"
 #include "term.h"
-#include <stdint.h>
-#include <stdlib.h>
 
 ///////////////////////////////// Global variables //////////////////////
 // car_column stores the current position of the car. Game columns are numbered
@@ -113,6 +114,7 @@ static void redraw_background(void);
 static void redraw_game_row(uint8_t row);
 static void draw_start_or_finish_line(uint8_t row);
 static void redraw_car();
+static uint8_t check_if_background(uint8_t row, uint8_t column);
 static void erase_car();
 static void redraw_powerup();
 static uint8_t powerup_display(void);
@@ -141,8 +143,8 @@ void init_game(void) {
 
 	clear_terminal();
 	set_scroll_region(8, 23);
-	term_redraw_background();
 	redraw_background();
+	term_redraw_background();
 	
 	// Add a car to the display. (This will redraw the car.)
 	put_car_at_start();
@@ -261,7 +263,7 @@ void scroll_background(void) {
 
 	// Check if car on power-up pixel
 	powerup_check();
-	
+
 	// Check if the lap has finished. We add 2 to the scroll position
 	// because we're looking at the front of the car. 
 	if(scroll_position - initial_scroll + 2 == RACE_DISTANCE) {
@@ -272,16 +274,17 @@ void scroll_background(void) {
 		// (The background may have scrolled into it.)
 		car_crashed = car_crashes_at(car_column, 0);
 	}
-	
+
 	// For speed purposes, we don't redraw the whole display, we
-	// shift the display down (right in the sense of the
+	// erase the car, shift the display down (right in the sense of the
 	// LED matrix) and redraw the car and draw the new row 15
 	erase_car();
-	ledmatrix_shift_display_right();
-	scroll_down();
+	ledmatrix_shift_display_right(); // Scroll LED matrix
+	scroll_down(); // Scroll terminal
 	redraw_car();
 	redraw_game_row(15);
 	if(powerup_display()) {
+		// Display power-up pixel
 		redraw_powerup();
 		term_draw_powerup(powerup_column);
 	}
@@ -339,7 +342,7 @@ static void redraw_game_row(uint8_t row) {
 	uint8_t race_row = scroll_position + row;
 	if(race_row - initial_scroll == 0 || race_row - initial_scroll == RACE_DISTANCE) {
 		draw_start_or_finish_line(row);
-		term_draw_start_or_finish_line(row);
+		term_draw_start_or_finish_line(row); // Do the same for terminal output
 	} else {
 		uint8_t background_row_data = background_data[race_row % NUM_GAME_ROWS];
 		for(i=0;i<=7;i++) {
@@ -351,7 +354,7 @@ static void redraw_game_row(uint8_t row) {
 			}
 		}
 		ledmatrix_update_column(15 - row, row_display_data);
-		term_redraw_game_row(row);
+		term_redraw_game_row(row); // Do the same for terminal output
 	}
 }
 
@@ -372,17 +375,17 @@ static void redraw_car(void) {
 	}
 	ledmatrix_update_pixel(15 - CAR_START_ROW, car_column, car_colour);
 	ledmatrix_update_pixel(15 - (CAR_START_ROW+1), car_column, car_colour);
-	term_redraw_car(car_colour, car_column);
+	term_redraw_car(car_colour, car_column); // Do the same for terminal output
 }
 
-uint8_t check_if_background(uint8_t row, uint8_t column) {
+// Check if given coordinates is a background or not (1 yes, 0 no)
+static uint8_t check_if_background(uint8_t row, uint8_t column) {
 	uint8_t race_row = scroll_position + row;
 	uint8_t background_row_data = background_data[race_row % NUM_GAME_ROWS];
 	return background_row_data & (1<<column);
 }
 
-// Erase the car (we assume it hasn't crashed - so we just replace
-// the car position with black)
+// Erase the car (replace the car position with previous colour)
 static void erase_car(void) {
 	uint8_t bg1, bg2;
 	if(check_if_background(CAR_START_ROW, car_column)) {
@@ -401,7 +404,7 @@ static void erase_car(void) {
 		bg2 = 0;
 	}
 
-	term_erase_car(bg1, bg2, car_column);
+	term_erase_car(bg1, bg2, car_column); // Do the same for terminal output
 }
 
 // Update power-up pixel
