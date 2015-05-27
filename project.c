@@ -46,7 +46,7 @@ void reset_speed(void);
 // Speed of car
 uint16_t speed;
 
-const uint16_t level_speed[10] = { 1000, 900, 800, 700, 600, 500, 400, 300, 200, 100 };
+const uint16_t level_speed[9] = { 1000, 900, 800, 700, 600, 500, 400, 300, 200 };
 
 // Pause status (0 resume, 1 pause)
 uint8_t paused = 0;
@@ -112,6 +112,9 @@ void splash_screen(void) {
 	printf_P(PSTR("CSSE2010/7201 project by Thuan Song Teoh"));
 	normal_display_mode();	// Return to default colour (White)
 
+	move_cursor(10,10);
+	printf_P(PSTR("Press a button/key to start"));
+
 	leaderboard_terminal_output(); // Display leader board
 	
 	// Output the scrolling message to the LED matrix
@@ -126,7 +129,8 @@ void splash_screen(void) {
 		// display or a button is pushed. We pause for 130ms between each scroll.
 		while(scroll_display()) {
 			_delay_ms(130);
-			if(button_pushed() != -1) {
+			if(button_pushed() != -1 || serial_input_available()) {
+				clear_serial_input_buffer();
 				return;
 			}
 		}
@@ -145,7 +149,7 @@ void level_splash_screen(void) {
 	// Build text
 	char txt[8] = "Level ";
 	char lvl[2];
-	sprintf(lvl, "%d", level);
+	sprintf(lvl, "%d", level+1);
 	strcat(txt, lvl);
 
 	// Output the scrolling message to the LED matrix
@@ -159,7 +163,8 @@ void level_splash_screen(void) {
 	// display or a button is pushed. We pause for 80ms between each scroll.
 	while(scroll_display()) {
 		_delay_ms(80);
-		if(button_pushed() != -1) {
+		if(button_pushed() != -1 || serial_input_available()) {
+			clear_serial_input_buffer();
 			return;
 		}
 	}
@@ -174,7 +179,7 @@ void new_game(void) {
 	set_display_attribute(FG_MAGENTA);
 	set_display_attribute(TERM_BRIGHT);
 	move_cursor(10,10);
-	printf_P(PSTR("Loading..."));
+	printf_P(PSTR("%-33s"),"Loading...");
 	normal_display_mode();
 
 	// Show level
@@ -206,7 +211,7 @@ void new_game(void) {
 	// Display level
 	set_display_attribute(FG_YELLOW);
 	move_cursor(30,2);
-	printf_P(PSTR("Level %d"), level);
+	printf_P(PSTR("Level %d"), level+1);
 	normal_display_mode();
 
 	// Display score
@@ -426,13 +431,14 @@ void handle_game_over() {
 	normal_display_mode();
 	move_cursor(10,7);
 	printf_P(PSTR("Score: %ld"), get_score());
-	move_cursor(10,8);
-	printf_P(PSTR("Press a button to start again"));
+	move_cursor(10,10);
+	printf_P(PSTR("Press a button/key to start again"));
 	leaderboard_terminal_output(); // Display leader board
 
-	while(button_pushed() == -1) {
+	while(button_pushed() == -1 && !serial_input_available()) {
 		; // wait until a button has been pushed
 	}
+	clear_serial_input_buffer();
 }
 
 void handle_new_lap() {
@@ -451,14 +457,14 @@ void handle_new_lap() {
 	printf_P(PSTR("LAP COMPLETE"));
 	set_display_attribute(FG_YELLOW);
 	move_cursor(10,14);
-	printf_P(PSTR("Level %d"), level);
+	printf_P(PSTR("Level %d"), level+1);
 	normal_display_mode();
 	move_cursor(10,16);
 	printf_P(PSTR("Score: %ld"), get_score());
 	move_cursor(10,17);
 	printf_P(PSTR("Lap Time: %d.%d second(s)"), get_lap_timer()/10, get_lap_timer()%10);
-	// Increase level up till 9
-	if (level < 9) {
+	// Increase level up till 8 (started from 0)
+	if (level < 8) {
 		level++;
 	}
 
@@ -489,7 +495,7 @@ void handle_new_lap() {
 	// Update HUD
 	set_display_attribute(FG_YELLOW);
 	move_cursor(30,2);
-	printf_P(PSTR("Level %d"), level);
+	printf_P(PSTR("Level %d"), level+1);
 	normal_display_mode();
 	move_cursor(30,4);
 	printf_P(PSTR("Score: %ld"), get_score());
