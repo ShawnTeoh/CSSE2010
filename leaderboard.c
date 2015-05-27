@@ -38,19 +38,21 @@ static void update_leaderboard(void) {
 }
 
 /* Helper function to compare current scores with scores in leader board.
- * Returns -1 if not a new record, else 0 to 4 representing the ranking.
+ * Returns -1 if not a new record/zero, else 0 to 4 representing the ranking.
  */
 static int8_t compare_score(void) {
 	uint8_t rank;
-	for(rank=0;rank<5;rank++) {
-		// Only compare if value initialised
-		if(current_score[rank].signature == SIGNATURE) {
-			if(get_score() > current_score[rank].score) {
+	if(get_score() > 0) {
+		for(rank=0;rank<5;rank++) {
+			// Only compare if value initialised
+			if(current_score[rank].signature == SIGNATURE) {
+				if(get_score() > current_score[rank].score) {
+					return rank;
+				}
+			} else {
+				// Uninitialised value means space available for new record
 				return rank;
 			}
-		} else {
-			// Uninitialised value means space available for new record
-			return rank;
 		}
 	}
 	return -1;
