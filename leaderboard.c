@@ -85,6 +85,7 @@ static char* get_initials(void) {
 	uint8_t escape_seq = 0;
 
 	while(1) {
+		clear_serial_input_buffer();
 		while(!serial_input_available()) {
 			; // Wait for serial data
 		}
@@ -111,9 +112,9 @@ static char* get_initials(void) {
 			// Backspace key pressed, clear previous character
 			if(pos > 0) {
 				pos--;
-				tmp[pos] = '\0';
+				tmp[pos] = 0;
 			} else {
-				tmp[pos] = '\0';
+				tmp[pos] = 0;
 			}
 		}
 		// Redisplay updated name variable
@@ -123,7 +124,12 @@ static char* get_initials(void) {
 	}
 
 	char* name = "     ";
-	strcpy(name, tmp);
+	if(tmp[0] != 0) {
+		strcpy(name, tmp);
+	} else {
+		strcpy(name, "Anon");
+	}
+
 	return name;
 }
 
