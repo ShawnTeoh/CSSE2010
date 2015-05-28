@@ -77,7 +77,7 @@ static void update_scores(char* name, uint8_t rank) {
 /* Helper function to get player's initials.
  */
 static char* get_initials(void) {
-	// Initialise empty name at first (empty names are still valid)
+	// Initialise empty name at first
 	char tmp[6];
 	memset(tmp, 0, 6);
 	char input;
@@ -127,6 +127,7 @@ static char* get_initials(void) {
 	if(tmp[0] != 0) {
 		strcpy(name, tmp);
 	} else {
+		// Save empty names as "Anon"
 		strcpy(name, "Anon");
 	}
 

@@ -126,7 +126,7 @@ void splash_screen(void) {
 	while(1) {
 		set_scrolling_display_text("RALLYRACER 43068052");
 		// Scroll the message until it has scrolled off the 
-		// display or a button is pushed. We pause for 130ms between each scroll.
+		// display or a button/key is pushed. We pause for 130ms between each scroll.
 		while(scroll_display()) {
 			_delay_ms(130);
 			if(button_pushed() != -1 || serial_input_available()) {
@@ -160,7 +160,7 @@ void level_splash_screen(void) {
 	set_text_colour(COLOUR_ORANGE);
 	set_scrolling_display_text(txt);
 	// Scroll the message until it has scrolled off the
-	// display or a button is pushed. We pause for 80ms between each scroll.
+	// display or a button/key is pushed. We pause for 80ms between each scroll.
 	while(scroll_display()) {
 		_delay_ms(80);
 		if(button_pushed() != -1 || serial_input_available()) {

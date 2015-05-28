@@ -38,9 +38,14 @@ volatile static uint8_t playing = 0;
  * sounds[n][0] - Number of beeps
  * sounds[n][1] - Length of beep (sounds[n][2] * 10ms)
  * sounds[n][2] - Length before next beep (sounds[n][2] * 10ms)
- * sounds[n][3] - Frequency of beep (must not get below 487Hz)
+ * sounds[n][3] - Frequency of beep (must not get below 487Hz, 0 to play descending tone)
  */
-static uint16_t sounds[4][4] =  { { 0 }, { 2, 3, 5, 4000 }, { 1, 10, 10, 3000 }, { 3, 2, 5, 2000 } };
+static uint16_t sounds[4][4] =  {
+	{ 0 },
+	{ 2, 3, 5, 4000 },
+	{ 4, 2, 2, 0 },
+	{ 3, 2, 5, 2000 },
+};
 
 // Current tune
 volatile static uint16_t* cur_sound;
@@ -60,7 +65,11 @@ uint8_t get_bit(uint8_t value, uint8_t index) {
 void set_sound_type(uint8_t type) {
 	cur_sound = sounds[type];
 	if(cur_sound[0]) {
-		OCR2A = F_CPU / 64 / cur_sound[3] - 1;
+		if(cur_sound[3]) {
+			OCR2A = F_CPU / 64 / cur_sound[3] - 1;
+		} else {
+			OCR2A = F_CPU / 64 / 3000 - 1;
+		}
 		sounded = 0;
 		playing = 1;
 		prev_time = get_timer1_clock_ticks();
@@ -114,6 +123,10 @@ ISR(TIMER2_COMPA_vect) {
 			current_time = get_timer1_clock_ticks();
 			if(current_time >= prev_time + cur_sound[2]) {
 				// Initiate next beep
+				if(!cur_sound[3]) {
+					// Descending tone
+					OCR2A -= 500;
+				}
 				prev_time = get_timer1_clock_ticks();
 				sounded++;
 				// Mute check
