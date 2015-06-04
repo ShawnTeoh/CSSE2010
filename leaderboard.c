@@ -83,44 +83,42 @@ static char* get_initials(void) {
 	char input;
 	uint8_t pos = 0;
 	uint8_t escape_seq = 0;
+	clear_serial_input_buffer();
 
 	while(1) {
-		clear_serial_input_buffer();
-		while(!serial_input_available()) {
-			; // Wait for serial data
-		}
-
 		// Part of code adapted from project.c to ignore escape sequences
-		input = fgetc(stdin);
-		if(input == '\n') {
-			// Enter key pressed, save name
-			break;
-		} else if(escape_seq == 0 && input == ESCAPE_CHAR) {
-			// We've hit the first character in an escape sequence (escape)
-			escape_seq++;
-		} else if(escape_seq == 1 && input == '[') {
-			// We've hit the second character in an escape sequence
-			escape_seq++;
-		} else if(escape_seq == 2) {
-			// Third (and last) character in the escape sequence
-			escape_seq = 0;
-		} else if(isalpha(input) && pos < 5) {
-			// Only alphabets are valid, maximum of 5 characters
-			tmp[pos] = input;
-			pos++;
-		} else if(input == BACK_SPACE) {
-			// Backspace key pressed, clear previous character
-			if(pos > 0) {
-				pos--;
-				tmp[pos] = 0;
-			} else {
-				tmp[pos] = 0;
+		if(serial_input_available()) {
+			input = fgetc(stdin);
+			if(input == '\n') {
+				// Enter key pressed, save name
+				break;
+			} else if(escape_seq == 0 && input == ESCAPE_CHAR) {
+				// We've hit the first character in an escape sequence (escape)
+				escape_seq++;
+			} else if(escape_seq == 1 && (input == '[' || input == 'O')) {
+				// We've hit the second character in an escape sequence
+				escape_seq++;
+			} else if(escape_seq == 2) {
+				// Third (and last) character in the escape sequence
+				escape_seq = 0;
+			} else if(isalpha(input) && pos < 5) {
+				// Only alphabets are valid, maximum of 5 characters
+				tmp[pos] = input;
+				pos++;
+			} else if(input == BACK_SPACE) {
+				// Backspace key pressed, clear previous character
+				if(pos > 0) {
+					pos--;
+					tmp[pos] = 0;
+				} else {
+					tmp[pos] = 0;
+				}
 			}
+			// Redisplay updated name variable
+			move_cursor(38, 15);
+			printf_P(PSTR("%-5s"), tmp);
+			move_cursor(38+pos, 15);
 		}
-		// Redisplay updated name variable
-		move_cursor(38, 15);
-		printf_P(PSTR("%-5s"), tmp);
-		move_cursor(38+pos, 15);
 	}
 
 	char* name = "     ";

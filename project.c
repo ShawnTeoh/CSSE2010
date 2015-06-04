@@ -368,9 +368,14 @@ void play_game(void) {
 				}
 				moves = 0;
 				if(has_lap_finished()) {
-					toggle_car_colour(1);
-					powerup_time = 0L;
-					handle_new_lap();	// Pauses until a button is pushed
+					toggle_car_colour(1); // Reset car colour
+					powerup_time = 0L; // Reset power up
+					stop_lap_timer(); // Stop timing
+					move_cursor(30,5);
+					printf_P(PSTR("Lap Time: %d.%d second(s)"), get_lap_timer()/10, get_lap_timer()%10);
+					move_cursor(37, 8);
+					last_lap_timer_update = current_time;
+					handle_new_lap();
 					// Reset the time of the last scroll
 					last_move_time = get_timer0_clock_ticks();
 				} else {
@@ -407,9 +412,6 @@ void play_game(void) {
 }
 
 void handle_game_over() {
-	// Stop timing
-	stop_lap_timer();
-
 	// Play sound
 	set_sound_type(2);
 	while(is_sound_playing()) {
@@ -419,7 +421,7 @@ void handle_game_over() {
 	// Clear outputs
 	ledmatrix_clear();
 	show_cursor();
-	is_highscore(); // Check if new high score achived
+	is_highscore(); // Check if new high score achieved
 	hide_cursor();
 	clear_terminal();
 
@@ -435,6 +437,10 @@ void handle_game_over() {
 	printf_P(PSTR("Press a button/key to start again"));
 	leaderboard_terminal_output(); // Display leader board
 
+	// Clear a button push or serial input if any are waiting
+	// (The cast to void means the return value is ignored.)
+	(void)button_pushed();
+	clear_serial_input_buffer();
 	while(button_pushed() == -1 && !serial_input_available()) {
 		; // wait until a button has been pushed
 	}
@@ -509,9 +515,9 @@ void display_lives(void) {
 	if (lives == 3) {
 		PORTC = (1<<0)|(1<<1)|(1<<2); // 3 LEDs
 	} else if (lives == 2) {
-		PORTC = (1<<1)|(1<<2); // 2 LEDs
+		PORTC = (1<<0)|(1<<1); // 2 LEDs
 	} else if (lives == 1) {
-		PORTC = (1<<2); // 1 LED
+		PORTC = (1<<0); // 1 LED
 	}
 }
 
